@@ -3,9 +3,9 @@ wmtk
 
 Robot-PFC Working Memory Toolkit
 
-----------------------------------------------------
+****************************************************
 Basic Installation for most flavors of Unix (Linux):
-----------------------------------------------------
+****************************************************
 
 ./configure
 make
@@ -28,9 +28,9 @@ LD_LIBRARY_PATH=/usr/local/lib
 Inside source.cpp
 #include <WMtk.h>
 
---------------------------------------------
+********************************************
 Building the WMtk in Windows using VC++ 6.0:
---------------------------------------------
+********************************************
 
 (Since the toolkit was not developed on a Windows platform, I can only
 provide the following help so that you can perform the port yourself.
