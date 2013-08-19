@@ -26,7 +26,7 @@ Remember to set appropriate environment variables to use the shared library.
 LD_LIBRARY_PATH=/usr/local/lib
 
 Inside source.cpp: 
-//#include <WMtk.h>
+    //#include <WMtk.h>
 
 ********************************************
 Building the WMtk in Windows using VC++ 6.0:
