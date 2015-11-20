@@ -32,8 +32,8 @@
  *****************************************************************************/
 
 #include <layer.h>
-#include <stddef.h>
-#include <math.h>
+#include <cstddef>
+#include <cmath>
 #include <iostream>
 #include <neural_unit.h>
 #include <activation_function.h>

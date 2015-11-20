@@ -37,7 +37,7 @@
 #include <random_number_generator.h>
 #include <layer.h>
 #include <nnet_math.h>
-#include <stddef.h>
+#include <cstddef>
 #include <iostream>
 
 FullForwardProjection::FullForwardProjection() : Projection() {

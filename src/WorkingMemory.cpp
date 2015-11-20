@@ -67,9 +67,10 @@
  *****************************************************************************/
 
 #include <WorkingMemory.h>
-#include <math.h>
+#include <cmath>
 #include <iomanip>
-#include <stddef.h>
+#include <cstddef>
+#include <cstdlib>
 #include <fstream>
 #include <list>
 #include <vector>
@@ -567,7 +568,7 @@ int WorkingMemory::tickEpisodeClock(list<Chunk>& candidate_chunks, bool learn) {
 #else
   // Epsilon-Greedy
   if ((1.0 * rand() / (RAND_MAX + 1.0)) < exploration_percentage)
-    selection = (int) (((double) combinations.size()) * rand() /
+    selection = (int) (((double) combinations.size()) * random() /
 		       (RAND_MAX + 1.0));
   else
     selection = getIndexOfMaximum(combinations.size(), values);

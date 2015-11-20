@@ -33,7 +33,7 @@
 
 #include <td_layer.h>
 #include <activation_function.h>
-#include <stddef.h>
+#include <cstddef>
 #include <iostream>
 #include <iomanip>
 

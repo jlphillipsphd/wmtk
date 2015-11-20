@@ -32,7 +32,7 @@
  *****************************************************************************/
 
 #include <simple_linear_activation_function.h>
-#include <stddef.h>
+#include <cstddef>
 
 SimpleLinearActivationFunction::SimpleLinearActivationFunction() : LinearActivationFunction(), SimpleActivationFunction() {
 }

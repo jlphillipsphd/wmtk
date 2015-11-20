@@ -32,7 +32,7 @@
  *****************************************************************************/
 
 #include <uniform_random_number_generator.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 UniformRandomNumberGenerator::UniformRandomNumberGenerator() : RandomNumberGenerator() {
   min = 0.0;

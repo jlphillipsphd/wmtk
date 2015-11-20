@@ -52,9 +52,9 @@
 #include <AggregateFeatureVector.h>
 #include <StateFeatureVector.h>
 #include <ChunkFeatureVector.h>
-#include <stddef.h>
+#include <cstddef>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 
 enum coding_scheme {
   CONCAT,

@@ -33,7 +33,7 @@
 
 #include <projection.h>
 #include <layer.h>
-#include <stddef.h>
+#include <cstddef>
 #include <iostream>
 
 Projection::Projection() : NNetObject() {

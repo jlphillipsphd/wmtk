@@ -32,7 +32,7 @@
  *****************************************************************************/
 
 #include <index_permuter.h>
-#include <stdlib.h>
+#include <cstdlib>
 //#include <iostream>
 
 IndexPermuter::IndexPermuter() : NNetObject() {

@@ -32,7 +32,7 @@
  *****************************************************************************/
 
 #include <simple_activation_function.h>
-#include <stddef.h>
+#include <cstddef>
 
 SimpleActivationFunction::SimpleActivationFunction() {
   return;

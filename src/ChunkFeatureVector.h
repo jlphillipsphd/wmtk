@@ -43,7 +43,7 @@ class WorkingMemory;
 
 #include <FeatureVector.h>
 #include <Chunk.h>
-#include <stddef.h>
+#include <cstddef>
 
 class ChunkFeatureVector : public FeatureVector {
 

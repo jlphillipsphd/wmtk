@@ -35,7 +35,7 @@
 #include <neural_unit.h>
 #include <layer.h>
 #include <nnet_math.h>
-#include <stddef.h>
+#include <cstddef>
 
 BpFullForwardProjection::BpFullForwardProjection() : FullForwardProjection() {
   learning_rate = 0.3;

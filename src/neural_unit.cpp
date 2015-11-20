@@ -32,7 +32,7 @@
  *****************************************************************************/
 
 #include <neural_unit.h>
-#include <stddef.h>
+#include <cstddef>
 #include <iostream>
 
 NeuralUnit::NeuralUnit() : NNetObject() {

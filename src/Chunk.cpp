@@ -44,7 +44,7 @@
  *****************************************************************************/
 
 #include <Chunk.h>
-#include <stddef.h>
+#include <cstddef>
 
 Chunk::Chunk() {
   chunk_data = NULL;

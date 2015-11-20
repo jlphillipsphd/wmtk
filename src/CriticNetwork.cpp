@@ -41,7 +41,7 @@
  *****************************************************************************/
 
 #include <CriticNetwork.h>
-#include <stddef.h>
+#include <cstddef>
 #include <fstream>
 #include <FeatureVector.h>
 

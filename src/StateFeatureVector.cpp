@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <StateFeatureVector.h>
-#include <stddef.h>
+#include <cstddef>
 
 StateFeatureVector::StateFeatureVector() : FeatureVector() {
   translate = NULL; // Empty function

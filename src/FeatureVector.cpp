@@ -47,8 +47,8 @@
  *****************************************************************************/
 
 #include <FeatureVector.h>
-#include <stddef.h>
-#include <math.h>
+#include <cstddef>
+#include <cmath>
 
 #include <iostream>
 std::ostream& operator<<(std::ostream& os, const FeatureVector& obj) {

@@ -32,7 +32,7 @@
  *****************************************************************************/
 
 #include <linear_activation_function.h>
-#include <stddef.h>
+#include <cstddef>
 
 LinearActivationFunction::LinearActivationFunction() : ActivationFunction() {
   gains = new double[1];

@@ -32,7 +32,7 @@
  *****************************************************************************/
 
 #include <activation_function.h>
-#include <stddef.h>
+#include <cstddef>
 
 ActivationFunction::ActivationFunction() : NNetObject() {
   dims = 1;

@@ -32,8 +32,8 @@
  *****************************************************************************/
 
 #include <nnet_math.h>
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 #include <sstream>
 
 double multiply(int vector_size, double* vector) {

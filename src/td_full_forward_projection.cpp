@@ -36,7 +36,7 @@
 #include <nnet_math.h>
 #include <td_layer.h>
 #include <layer.h>
-#include <stddef.h>
+#include <cstddef>
 #include <iostream>
 
 TDFullForwardProjection::TDFullForwardProjection() : BpFullForwardProjection() {
