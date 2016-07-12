@@ -11,7 +11,7 @@
 
 //  This program is distributed in the hope that it will be useful,
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTIBILITY or FITNESS FOR A PARTICULAT PURPOSE. See the
+//  MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 //  GNU General Public License for more details.
 
 //  You should have recieved a copy of the GNU General Public License
@@ -100,6 +100,7 @@ class CriticNetwork {
     void setLearningRate(double newLearningRate);
     void setDiscount(double newDiscount);
     void setLambda(double newLambda);
+    void setEpsilon(double newEpsilon);
     void setVectorSize(int size);
     void setProperties( double newLearningRate,
                         double newDiscount,

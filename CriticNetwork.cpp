@@ -83,7 +83,6 @@ CriticNetwork& CriticNetwork::operator=(const CriticNetwork& rhs) {
     this->gamma = rhs.gamma;
     this->lambda = rhs.lambda;
     this->vectorSize = rhs.vectorSize;
-    this->eligibilityTrace = rhs.eligibilityTrace;
 
     return *this;
 }
@@ -106,6 +105,7 @@ int CriticNetwork::getVectorSize() { return vectorSize; }
 void CriticNetwork::setLearningRate(double newLearningRate) { this->alpha = newLearningRate; }
 void CriticNetwork::setDiscount(double newDiscount) { this->gamma = newDiscount; }
 void CriticNetwork::setLambda(double newLambda) { this->lambda = newLambda; }
+void CriticNetwork::setEpsilon(double newEpsilon) { this->epsilon = newEpsilon; }
 void CriticNetwork::setVectorSize(int newSize) { this->vectorSize = newSize; }
 
 // The setProperties method allows you to set all the properties of the critic
@@ -127,6 +127,5 @@ void CriticNetwork::setProperties( double newLearningRate,
 
 // Get the values of a given hrr
 double CriticNetwork::V(HRR hrr, vector<double> weights) {
-    HRREngine hrrEngine;
-    return hrrEngine.dot(hrr, weights);
+    return HRREngine::dot(hrr, weights);
 }
