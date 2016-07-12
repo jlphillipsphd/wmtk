@@ -36,20 +36,14 @@ private:
  	// Generates an hrr representation for the given vector
  	HRR generateHRR();
 
-	// Forms a complex concept by performing circular convolution on two hrrs
-	HRR convolveHRRs(HRR hrr1, HRR hrr2);
-
-	// Perform a circular correlation (involution) operation
-	HRR correlateHRRs(HRR complexHRR, HRR hrr);
-
 	// Helper method invertVector calculates the approximate inversion of an HRR
 	HRR invertVector(HRR hrr);
 
-	// Split a string into a vector of strigs using '*' as a delimiter
-	vector<string> explode(string str);
-
 	// Reorder the names of the complex concept in lexicographical order
 	string reorderNameLex(string complexConcept);
+
+    // Construct identity vector
+    HRR identity();
 
 public:
 
@@ -157,11 +151,20 @@ public:
 	void listAllConceptNames();
 
 
+    // Forms a complex concept by performing circular convolution on two hrrs
+    HRR convolveHRRs(HRR hrr1, HRR hrr2);
+
+    // Perform a circular correlation (involution) operation
+    HRR correlateHRRs(HRR complexHRR, HRR hrr);
+
 	// Compare two HRRs by taking their dot product and checking to see if the result is above a threshold
 	bool compare(HRR hrr1, HRR hrr2);
 
 	// Calculate the dot product of two HRRs
-	float dot(HRR hrr1, HRR hrr2);
+	static float dot(HRR hrr1, HRR hrr2);
+
+	// Split a string into a vector of strigs using the given delimiter
+	static vector<string> explode(string str, char delimiter);
 };
 
 #endif	/* HRR_ENGINE */

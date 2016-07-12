@@ -17,15 +17,24 @@ using namespace std;
 // Default constructor. Sets vector size to 128
 HRREngine::HRREngine(){
 	this->vectorSize = 128;
+
+    this->conceptMemory.insert(pair<string, HRR>("I", identity()));
 }
 
 // Initializing Constructor
 HRREngine::HRREngine(int vectorSize) {
     this->vectorSize = vectorSize;
+
+    this->conceptMemory.insert(pair<string, HRR>("I", identity()));
 }
 
 HRREngine& HRREngine::operator=(const HRREngine& rhs) {
-    this->conceptMemory = rhs.conceptMemory;
+
+    // Perform a deep copy of the concept memory
+    for (pair<string, HRR> concept : rhs.conceptMemory) {
+        this->conceptMemory.insert(concept);
+    }
+
     this->vectorSize = rhs.vectorSize;
     this->threshold = rhs.threshold;
 
@@ -78,8 +87,8 @@ string HRREngine::combineConcepts(string concept1, string concept2){
 	// Create the new name for the object (lexicographical order)
 	//	Break the name of the first concept into its constituent parts, and store in descriptors
 	//	Then, add each of the constituent parts of the second concept's name into descriptors
-	vector<string> descriptors = explode(concept1);
-	for (string str : explode(concept2) ){
+	vector<string> descriptors = explode(concept1, '*');
+	for (string str : explode(concept2, '*') ){
 		descriptors.push_back(str);
 	}
 
@@ -222,7 +231,7 @@ void HRREngine::encodeConcepts(vector<string> concepts){
 }
 
 void HRREngine::construct(string conceptName){
-	vector<string> concepts = explode(conceptName);
+	vector<string> concepts = explode(conceptName, '*');
 	sort(concepts.begin(), concepts.end());
 
 	constructConcept(concepts);
@@ -283,6 +292,7 @@ int HRREngine::getVectorSize(){
 // Sets the general length of the vector
 void HRREngine::setVectorSize(int size){
 	vectorSize = size;
+    conceptMemory["I"] = identity();
 }
 
 /**
@@ -298,7 +308,9 @@ HRR HRREngine::query(string name){
 	// Reorder the string
 	name = reorderNameLex(name);
 
-	vector<string> strings = explode(name);
+    //cout << "Queried Name: " << name << "\n";
+
+	vector<string> strings = explode(name, '*');
 
 	// See if a value exists for this concept in the map
 	//	For each concept in concept memory, check if the key matches the name of the concept we are looking for
@@ -336,7 +348,7 @@ string HRREngine::query(HRR hrr){
 		// Find the dot product of the queried hrr and the current hrr in the map
 		dotProduct = dot(hrr, concept.second);
 
-		cout << "\nDot product of hrr and " << concept.first << ": " << dotProduct << "\n";
+		//cout << "\nDot product of hrr and " << concept.first << ": " << dotProduct << "\n";
 
 		// If the dot product is the highest so far, then set the match to be the current representation in the map
 		if (dotProduct > threshold && dotProduct > bestMatch){
@@ -347,13 +359,16 @@ string HRREngine::query(HRR hrr){
 			// The new match is the name of the current concept
 			match = concept.first;
 		}
+        //cout << "End of loop\n";
 	}
-
+    //cout << "\n Match: " << match << "\n";
 	return match;
 }
 
 vector<string> HRREngine::unpack( string complexConcept ){
 	vector<string> conceptList;
+
+    //cout << "Concept to unpack: " << complexConcept << "\n";
 
 	unpackRecursive( reorderNameLex(complexConcept), conceptList );
 	sort( conceptList.begin(), conceptList.end() );
@@ -365,11 +380,15 @@ void HRREngine::unpackRecursive( string complexConcept, vector<string>& conceptL
 
 	complexConcept = reorderNameLex(complexConcept);
 
+    //cout << "Unpacking concept: " << complexConcept << "\n";
+
 	// Get the list of base concepts in the complexConcept
-	vector<string> concepts = explode( complexConcept );
+	vector<string> concepts = explode( complexConcept, '*' );
 
 	// Base case: if there is only one concept, return the representation for that concept
 	if ( concepts.size() == 1 ) {
+
+        //cout << "Last concept: " << concepts[0] << "\n";
 
         // Check to see if the concept is in the concept list.
 		bool inList = false;
@@ -428,16 +447,14 @@ void HRREngine::unpackRecursive( string complexConcept, vector<string>& conceptL
 
 			bool inMemory = false;
 			for ( pair<string, HRR> concept : conceptMemory ){
-				if ( concept.first == complexConcept ) inMemory = false;
+				if ( concept.first == complexConcept ) inMemory = true;
 			}
 
 			if ( !inMemory ) {
-
-				conceptMemory.insert( pair<string, HRR>( complexConcept, convolveHRRs(findHRRByName(currentConcept),findHRRByName(otherConcepts) ) ) );
+				conceptMemory.insert( pair<string, HRR>( complexConcept, convolveHRRs( query(currentConcept), query(otherConcepts) ) ) );
 			}
-
 		}
-	};
+	}
 }
 
 
@@ -456,9 +473,11 @@ vector<HRR> HRREngine::unpack(HRR complexConcept){
 
 // Find hrr by name
 HRR HRREngine::findHRRByName(string name){
-	for (pair<string, HRR> concept: conceptMemory)
+	for (pair<string, HRR> concept: conceptMemory) {
 		if (concept.first == name) return concept.second;
+    }
 
+    cout << "No HRR found for concept: " << name << "\n";
 	vector<double> newVector;
 	return newVector;
 }
@@ -510,17 +529,22 @@ bool HRREngine::compare(HRR hrr1, HRR hrr2){
 
 // Calculate the dot product of two HRRs
 float HRREngine::dot(HRR hrr1, HRR hrr2){
+
+    if (hrr1.size() != hrr2.size()){
+        cerr << "ERROR: Cannot perform dot operation on two vectors of differing size\n";
+        return 0.0;
+    }
+
 	float dotProduct = 0;
-	for (int i = 0; i < vectorSize; i++) {
+	for (int i = 0; i < hrr1.size(); i++) {
 		dotProduct += hrr1[i] * hrr2[i];
 	}
 	return dotProduct;
 }
 
 // Explode a string using '*' as a delimiter
-vector<string> HRREngine::explode(string str){
+vector<string> HRREngine::explode(string str, char delimiter){
 	vector<string> stringVector = vector<string>();
-	char delimiter = '*';
 
 	int pos = 0;
 	string token;
@@ -536,7 +560,7 @@ vector<string> HRREngine::explode(string str){
 }
 
 string HRREngine::reorderNameLex(string complexConcept){
-	vector<string> conceptNames = explode(complexConcept);
+	vector<string> conceptNames = explode(complexConcept, '*');
 	sort(conceptNames.begin(), conceptNames.end());
 
 	string newName = "";
@@ -545,4 +569,13 @@ string HRREngine::reorderNameLex(string complexConcept){
 	}
 	newName += conceptNames[conceptNames.size() - 1];
 	return newName;
+}
+
+// Construct an identity vector of given length
+HRR HRREngine::identity() {
+
+    vector<double> identity(vectorSize, 0.0);
+    identity[0] = 1.0;
+
+    return identity;
 }
