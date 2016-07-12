@@ -30,8 +30,10 @@
  * Author:    Grayson M. Dubois
  * Mentor:    Joshua L. Phillips
  ******************************************************************************/
-
+#include <iostream>
+#include <random>
 #include "WorkingMemory.h"
+#include "hrr/hrrOperators.h"
 
 using namespace std;
 
@@ -41,17 +43,20 @@ using namespace std;
 
 // Default Constructor
 WorkingMemory::WorkingMemory() {
-    workingMemorySlots = 3;
-    vectorSize = 128;
+    workingMemoryChunks.resize(3);
 
     previousReward = 0.0;
     previousValue = 0.0;
 
+    vectorSize = 128;
     hrrengine.setVectorSize(vectorSize);
     critic.setVectorSize(vectorSize);
 
+    uniform_real_distribution<double> distribution(-0.01, 0.01);
+    default_random_engine re;
+
     eligibilityTrace.resize(vectorSize, 0);
-    weights.resize(vectorSize, 0);
+    weights.resize(vectorSize, distribution(re));
 }
 
 // Initializing Constructor
@@ -63,8 +68,7 @@ WorkingMemory::WorkingMemory( double learningRate,
                               int vectorSize,
                               int numberOfChunks ) {
 
-    this->workingMemorySlots = numberOfChunks;
-    this->vectorSize = vectorSize;
+    this->workingMemoryChunks.resize(numberOfChunks);
 
     this->previousReward = 0.0;
     this->previousValue = 0.0;
@@ -72,8 +76,14 @@ WorkingMemory::WorkingMemory( double learningRate,
     this->hrrengine.setVectorSize(vectorSize);
     this->critic.setProperties(learningRate, discount, lambda, vectorSize);
 
+
+
+    uniform_real_distribution<double> distribution(-0.01, 0.01);
+    default_random_engine re;
+
+    this->vectorSize = vectorSize;
     this->eligibilityTrace.resize(vectorSize, 0);
-    this->weights.resize(vectorSize, 0);
+    this->weights.resize(vectorSize, distribution(re));
 }
 
 // Copy-Constructor
@@ -82,8 +92,10 @@ WorkingMemory::WorkingMemory(const WorkingMemory& rhs) {
     this->critic = rhs.critic;
     this->hrrengine = rhs.hrrengine;
 
-    this->workingMemoryChunks = rhs.workingMemoryChunks;
-    this->workingMemorySlots = rhs.workingMemorySlots;
+    for ( string chunk : rhs.workingMemoryChunks ) {
+        this->workingMemoryChunks.push_back(chunk);
+    }
+
     this->vectorSize = rhs.vectorSize;
 
     this->previousReward = rhs.previousReward;
@@ -93,19 +105,23 @@ WorkingMemory::WorkingMemory(const WorkingMemory& rhs) {
     this->weights = rhs.weights;
 }
 
+// Destructor
+WorkingMemory::~WorkingMemory() {}
+
 // Assignment Operator
 WorkingMemory& WorkingMemory::operator=(const WorkingMemory& rhs) {
 
     this->critic = rhs.critic;
     this->hrrengine = rhs.hrrengine;
 
-    this->workingMemoryChunks = rhs.workingMemoryChunks;
-    this->workingMemorySlots = rhs.workingMemorySlots;
-    this->vectorSize = rhs.vectorSize;
+    for ( string chunk : rhs.workingMemoryChunks ) {
+        this->workingMemoryChunks.push_back(chunk);
+    }
 
     this->previousReward = rhs.previousReward;
     this->previousValue = rhs.previousValue;
 
+    this->vectorSize = rhs.vectorSize;
     this->eligibilityTrace = rhs.eligibilityTrace;
     this->weights = rhs.weights;
 
@@ -122,9 +138,11 @@ double WorkingMemory::getDiscount() { return critic.getDiscount(); }
 double WorkingMemory::getLambda() { return critic.getLambda(); }
 double WorkingMemory::getEpsilon() { return critic.getEpsilon(); }
 int WorkingMemory::getVectorSize() { return vectorSize; }
+int WorkingMemory::workingMemorySlots() { return workingMemoryChunks.size(); }
 
 double WorkingMemory::getPreviousReward() { return previousReward; }
 double WorkingMemory::getPreviousValue() { return previousValue; }
+
 
 /**---------------------------------------------------------------------------*
  *  MUTATORS (Setters)
@@ -135,3 +153,196 @@ double WorkingMemory::getPreviousValue() { return previousValue; }
  void WorkingMemory::setLambda(double newLambda) { this->critic.setLambda(newLambda); }
  void WorkingMemory::setEpsilon(double newEpsilon) { this->critic.setEpsilon(newEpsilon); }
  void WorkingMemory::setVectorSize(int newVectorSize) { this->critic.setVectorSize(newVectorSize); }
+
+
+/**---------------------------------------------------------------------------*
+ *  (*MAIN DEVELOPER INTERFACE*) LEARNING PROCESS METHODS
+ *----------------------------------------------------------------------------*/
+
+// Initialize the episode.
+//  Takes the string representation of the initial state and an optional
+//  value for the reward at that state (typically 0). Sets the episode up.
+void WorkingMemory::initializeEpisode(string state, double reward = 0.0) {
+
+    // Get the candidate chunks from the state
+    vector<string> candidateChunks = getCandidateChunksFromState();
+
+    // Store the current state
+    this->state = state;
+
+    // Find the most valuable chunks to store in working memory
+    findMostValuableChunks(candidateChunks);
+
+    // Find the value of the current state
+    double valueOfState = findValueOfWorkingMemoryContents(workingMemoryChunks);
+
+
+    // Finish up the initialization
+    setPreviousValue(valueOfState);
+    setPreviousReward(reward);
+}
+
+// Take a step in the episode.
+//  Takes the string representation of the current state and an optional
+//  value for the reward at that state (typically 0). Calculates a guess of
+//  what information is most valuable to retain from current state.
+void WorkingMemory::step(string state, double reward = 0.0) {
+
+}
+
+// Get the final reward and finish the episode.
+void WorkingMemory::absorbReward(string state, double reward = 1.0) {
+
+}
+
+// Get all chunks currently held in working memory
+vector<string> WorkingMemory::queryWorkingMemory() {
+
+    vector<string> chunkNames;
+
+    for (string chunk : workingMemoryChunks) {
+        chunkNames.push_back(chunk);
+    }
+
+    return chunkNames;
+}
+
+// Get chunk in working memory at specific index
+string WorkingMemory::queryWorkingMemory(int atIndex) {
+    return workingMemoryChunks[atIndex];
+}
+
+
+/**---------------------------------------------------------------------------*
+ *  HELPER METHODS
+ *----------------------------------------------------------------------------*/
+
+ // Unpack the state into a vector of possible candidates for working memory
+ vector<string> WorkingMemory::getCandidateChunksFromState() {
+     vector<string> candidateChunks;
+
+     // First, we separate the concepts represented in the state by splitting on
+     //  the '+' character
+     vector<string> stateConceptNames = HRREngine::explode(state, '+');
+
+     /*cout << "State Concept Names:\n";
+     for (string name : stateConceptNames) {
+         cout << name << "\n";
+     }*/
+
+     // Now we check if there is an empty string in the list, and remove it
+     stateConceptNames.erase( remove( stateConceptNames.begin(), stateConceptNames.end(), "" ), stateConceptNames.end() );
+
+     // Add the identity vector to the list of candidate chunks
+     for ( int i = 0; i < workingMemorySlots(); i++ ) {
+        candidateChunks.push_back("I");
+     }
+
+     // Add the combinations of constituent concepts for each state concept to
+     //  the list of candidate chunks
+     vector<string>::iterator iter;
+     for (string concept : stateConceptNames) {
+         vector<string> candidates = candidateChunks;
+
+         //HRR conceptRepresentation = hrrengine.query(concept);
+         //vector<HRR> unpackedConcepts = hrrengine.unpack(conceptRepresentation);
+
+         vector<string> unpackedConcepts = hrrengine.unpack(concept);
+
+         candidateChunks.resize( candidates.size() + unpackedConcepts.size());
+
+         // Finds the union of the current candidate chunks with the newly
+         //  unpacked concepts, and stores in the candidate chunks vector
+         iter = set_union( candidates.begin(), candidates.end(),
+                    unpackedConcepts.begin(), unpackedConcepts.end(),
+                    candidateChunks.begin() );
+     }
+
+     //candidateChunks.resize(iter - candidateChunks.begin());
+     //cout << "Number of candidate chunks: " << candidateChunks.size() << "\n";
+
+     return candidateChunks;
+ }
+
+// Compare all possible combinations of candidate chunks with the
+void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
+
+    vector<string> mostValuableChunks;
+    currentChunkValue = -9999999.99;
+
+    findCombinationsOfCandidates(0, workingMemorySlots(), candidateChunks, mostValuableChunks);
+
+    return;
+}
+
+void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<string>& candidates, vector<string>& combination) {
+    if (slots == 0) {
+
+        for (string concept : combination) {
+            cout << concept << " ";
+        }
+        cout << "\n";
+
+
+        // Add the value function and comparison here
+        double valueOfContents = findValueOfWorkingMemoryContents(combination);
+        cout << " Value of Combination: " << valueOfContents << "\n";
+
+        if ( valueOfContents > currentChunkValue ) {
+            cout << "Found better WM contents!\n";
+            workingMemoryChunks = combination;
+            currentChunkValue = valueOfContents;
+        }
+
+        return;
+    }
+    for (int i = offset; i <= candidates.size() - slots; ++i) {
+        combination.push_back(candidates[i]);
+        findCombinationsOfCandidates(i+1, slots-1, candidates, combination);
+        combination.pop_back();
+    }
+}
+
+// Find the HRR representing the state
+HRR WorkingMemory::stateRepresentation() {
+    vector<string> stateConceptNames = HRREngine::explode(state, '+');
+    HRR stateRepresentation = hrrengine.query(stateConceptNames[0]);
+
+    for ( int i = 1; i < stateConceptNames.size(); i++) {
+        stateRepresentation = stateRepresentation + hrrengine.query(stateConceptNames[i]);
+    }
+
+    return stateRepresentation;
+}
+
+// Calculate the value of the current state
+double WorkingMemory::findValueOfState() {
+
+    return critic.V(stateRepresentation(), weights);
+}
+
+// Calculate the value of a given set of working memory contents and state
+double WorkingMemory::findValueOfWorkingMemoryContents(vector<string> contents) {
+
+    // Get the convolved product of each chunk in working memory
+    HRR representation = hrrengine.query(contents[0]);
+    for ( int i = 1; i < contents.size(); i++ ) {
+        representation = hrrengine.convolveHRRs(representation, hrrengine.query(contents[i]));
+    }
+
+    // Convolve the representation of the WM contents with the state representation
+    representation = hrrengine.convolveHRRs(representation, stateRepresentation());
+
+    // Calculate the value of the representation of the current state and contents
+    return critic.V(representation, weights);
+}
+
+ // Set the reward of the previous state
+void WorkingMemory::setPreviousReward(double previousReward) {
+    this->previousReward = previousReward;
+}
+
+// Set the value of the previous state
+void WorkingMemory::setPreviousValue(double previousValue) {
+    this->previousValue = previousValue;
+}

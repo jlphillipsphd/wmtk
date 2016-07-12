@@ -43,7 +43,7 @@ using namespace std;
 
 class WorkingMemory {
 
-  private:
+  public:
 
     /**-----------------------------------------------------------------------*
      *  DATA MEMBERS & PROPERTIES
@@ -52,13 +52,13 @@ class WorkingMemory {
     HRREngine hrrengine;                        // The HRR Engine handles the representation of information used in working memory
     CriticNetwork critic;                       // The critic determines what states are valuable and thus what chunks are retained in morking memory
     vector<string> workingMemoryChunks;         // The chunks of information currently held in working memory
-
-    int workingMemorySlots;                     // The number of slots in working memory that can hold chunks of information
-    int vectorSize;                             // The size of the hrrs and other TD vectors
+    string state;                               // The current state
+    double currentChunkValue;                   // The current value of the chunks and the state
 
     double previousReward;                      // Reward of the previous state
     double previousValue;                       // Value of the previous state
 
+    int vectorSize;                             // The size of the hrrs and other TD vectors
     vector<double> eligibilityTrace;            // Tracks the eligibility of information to update in the weight vector
     vector<double> weights;                     // Stores the weight vector which will be updated to contain the information for the values of each state
 
@@ -100,6 +100,7 @@ class WorkingMemory {
     double getLambda();
     double getEpsilon();
     int getVectorSize();
+    int workingMemorySlots();
 
     double getPreviousReward();
     double getPreviousValue();
@@ -123,16 +124,16 @@ class WorkingMemory {
     // Initialize the episode.
     //  Takes the string representation of the initial state and an optional
     //  value for the reward at that state (typically 0). Sets the episode up.
-    void initializeEpisode(string state, double reward = 0.0);
+    void initializeEpisode(string state, double reward);
 
     // Take a step in the episode.
     //  Takes the string representation of the current state and an optional
     //  value for the reward at that state (typically 0). Calculates a guess of
     //  what information is most valuable to retain from current state.
-    void step(string state, double reward = 0.0);
+    void step(string state, double reward);
 
     // Get the final reward and finish the episode.
-    void absorbReward(string state, double reward = 1.0);
+    void absorbReward(string state, double reward);
 
 
     // Get chunks currently held in working memory
@@ -140,14 +141,30 @@ class WorkingMemory {
     string queryWorkingMemory(int atIndex);
 
 
-  private:
+  //private:
 
     /**-----------------------------------------------------------------------*
      *  HELPER METHODS
      *------------------------------------------------------------------------*/
 
     // Unpack the state into a vector of possible candidates for working memory
-    vector<HRR> getCandidateChunksFromState(string state);
+    vector<string> getCandidateChunksFromState();
+
+    // Compare all possible combinations of candidate chunks to find the most
+    // valuable set of working memory contents
+    void findMostValuableChunks(vector<string> candidateChunks);
+
+    // Find all combinations of candidate chunks recursively
+    void findCombinationsOfCandidates(int offset, int slots, vector<string>& candidates, vector<string>& combination);
+
+    // Find the HRR representing the state
+    HRR stateRepresentation();
+
+    // Calculate the value of the current state
+    double findValueOfState();
+
+    // Calculate the value of a given set of working memory contents and state
+    double findValueOfWorkingMemoryContents(vector<string> contents);
 
     // Set the previous reward and value. Only accessible by WMTK
     void setPreviousReward(double previousReward);
