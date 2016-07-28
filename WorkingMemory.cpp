@@ -226,7 +226,7 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
     // Find the value of the current state
     double valueOfState = findValueOfWorkingMemoryContents(workingMemoryChunks);
 
-    // Update the eligibility trace
+    // Update the eligibility trace of the current state for the next step
     eligibilityTrace = ( (eligibilityTrace * critic.getLambda()) + stateAndWorkingMemoryRepresentation() ) * (1/sqrt(2));
 
     // Finish up the initialization
@@ -273,7 +273,7 @@ void WorkingMemory::step(string state, double reward) {
         weights[x] += critic.getLearningRate() * TDError * eligibilityTrace[x];
     }
 
-    // Update the eligibility trace
+    // Update the eligibility trace of the current state for the next step
     eligibilityTrace = ( (eligibilityTrace * critic.getLambda()) + stateAndWorkingMemoryRepresentation() ) * (1/sqrt(2));
 
     // Store values for next time step
@@ -288,7 +288,7 @@ void WorkingMemory::absorbReward(string state, double reward) {
     this->state = state;
 
     // Build the list of candidate chunks
-        vector<string> candidateChunks = getCandidateChunksFromState();
+    vector<string> candidateChunks = getCandidateChunksFromState();
 
     // Add current working memory contents to the list of candidates, as long as they are not already there
     for ( string chunk : workingMemoryChunks ) {

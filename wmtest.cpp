@@ -21,10 +21,10 @@ int main(int argc, char** argv) {
     // Create a working memory object with the given properties
     WorkingMemory wm(0.75, 0.9, 0.0, 0.0, 256, 2);
 
-    wm.initializeEpisode(randomItem(colors, 7));
-    //printWMContents(wm);
-
     for ( int i = 0; i < 200; i++) {
+        wm.initializeEpisode(randomItem(colors, 7));
+        //printWMContents(wm);
+
         bool done = false;
         int numberOfStepsToGoal = 0;
         while (!done) {
@@ -37,13 +37,13 @@ int main(int argc, char** argv) {
                 wm.absorbReward(randomItem(colors, 7));
                 done = true;
                 //cout << "Done!\n\n";
-                cout << numberOfStepsToGoal << /*"," << <<*/ "\n";
-                fout << numberOfStepsToGoal << /*"," << <<*/ "\n";
+                cout << numberOfStepsToGoal << "\n";
+                fout << numberOfStepsToGoal << "\n";
             }
             if ( numberOfStepsToGoal > 199 ) {
                 done = true;
-                cout << numberOfStepsToGoal << /*"," << <<*/ "\n";
-                fout << numberOfStepsToGoal << /*"," << <<*/ "\n";
+                cout << numberOfStepsToGoal << "\n";
+                fout << numberOfStepsToGoal << "\n";
             }
         }
     }
