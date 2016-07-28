@@ -11,7 +11,7 @@
 
 //  This program is distributed in the hope that it will be useful,
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTIBILITY or FITNESS FOR A PARTICULAT PURPOSE. See the
+//  MERCHANTIBILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 //  GNU General Public License for more details.
 
 //  You should have recieved a copy of the GNU General Public License
@@ -38,6 +38,7 @@
  #include <fstream>
  #include <vector>
  #include "hrr/hrrengine.h"
+ #include "hrr/hrrOperators.h"
  #include "CriticNetwork.h"
 
 using namespace std;
@@ -125,7 +126,17 @@ void CriticNetwork::setProperties( double newLearningRate,
  *  TD LEARNING METHODS
  **---------------------------------------------------------------------------*/
 
-// Get the values of a given hrr
+// Get the values of a given hrr against a weight vector
 double CriticNetwork::V(HRR hrr, vector<double> weights) {
     return HRREngine::dot(hrr, weights);
+}
+
+// Calculate TDError of a state
+double CriticNetwork::TDError(double r, double valueOfState, double valueOfPreviousState) {
+    return (r + gamma*valueOfState) - valueOfPreviousState;
+}
+
+// Calculate TDError of a goal state
+double CriticNetwork::TDError(double r, double valueOfGoal) {
+    return r - valueOfGoal;
 }

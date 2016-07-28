@@ -100,3 +100,12 @@ HRR operator*(const HRR& hrr1, const HRR& hrr2) {
 
 	return newConcept;
 }
+
+// Overload the '*' operator for an HRR and a scalar
+HRR operator*(const HRR& hrr, const double c) {
+    HRR vector = hrr;
+    for (double& d : vector) {
+        d *= c;
+    }
+    return vector;
+}

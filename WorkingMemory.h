@@ -1,3 +1,6 @@
+#ifndef WMTK_WORKING_MEMORY_H
+#define WMTK_WORKING_MEMORY_H
+
 //  Working Memory Toolkit (WMtk)
 //  Adaptive Working Memory Library
 //  Copyright (C) Joshua L. Phillips & Grayson M. Dubois
@@ -31,9 +34,6 @@
  * Mentor:    Joshua L. Phillips
  ******************************************************************************/
 
-#ifndef WMTK_WORKING_MEMORY_H
-#define WMTK_WORKING_MEMORY_H
-
 #include <fstream>
 #include <vector>
 #include "hrr/hrrengine.h"
@@ -62,6 +62,7 @@ class WorkingMemory {
     vector<double> eligibilityTrace;            // Tracks the eligibility of information to update in the weight vector
     vector<double> weights;                     // Stores the weight vector which will be updated to contain the information for the values of each state
 
+    vector<int> permutation;                    // The permutation vector used to permute HRRs
 
   public:
 
@@ -124,16 +125,16 @@ class WorkingMemory {
     // Initialize the episode.
     //  Takes the string representation of the initial state and an optional
     //  value for the reward at that state (typically 0). Sets the episode up.
-    void initializeEpisode(string state, double reward);
+    void initializeEpisode(string state, double reward = 0.0);
 
     // Take a step in the episode.
     //  Takes the string representation of the current state and an optional
     //  value for the reward at that state (typically 0). Calculates a guess of
     //  what information is most valuable to retain from current state.
-    void step(string state, double reward);
+    void step(string state, double reward = 0.0);
 
     // Get the final reward and finish the episode.
-    void absorbReward(string state, double reward);
+    void absorbReward(string state, double reward = 1.0);
 
 
     // Get chunks currently held in working memory
@@ -150,6 +151,9 @@ class WorkingMemory {
     // Unpack the state into a vector of possible candidates for working memory
     vector<string> getCandidateChunksFromState();
 
+    // Collects a random selection of candidateChunks to put in working memory
+    void chooseRandomWorkingMemoryContents(vector<string> candidates);
+
     // Compare all possible combinations of candidate chunks to find the most
     // valuable set of working memory contents
     void findMostValuableChunks(vector<string> candidateChunks);
@@ -160,6 +164,9 @@ class WorkingMemory {
     // Find the HRR representing the state
     HRR stateRepresentation();
 
+    // Get the representation of the current working memory contents with the current state
+    HRR stateAndWorkingMemoryRepresentation();
+
     // Calculate the value of the current state
     double findValueOfState();
 
@@ -169,6 +176,12 @@ class WorkingMemory {
     // Set the previous reward and value. Only accessible by WMTK
     void setPreviousReward(double previousReward);
     void setPreviousValue(double previousValue);
+
+    // Perform a permutation on an HRR
+    HRR permute(HRR original);
+
+    // Undo the permutation to find the original unshuffled HRR
+    HRR inversePermute(HRR permuted);
 };
 
 #endif      /* WMTK_WORKING_MEMORY_H */

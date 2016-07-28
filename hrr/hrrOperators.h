@@ -1,3 +1,6 @@
+#ifndef HRR_OPERATORS
+#define HRR_OPERATORS
+
 //  Holographic Reduced Representation Engine (HRRE)
 //  Copyright (C) Joshua L. Phillips & Grayson Dubois
 //  Department of Computer Science
@@ -38,3 +41,8 @@ HRR operator-(const HRR& hrr1, const HRR& hrr2);
 
 // Overload the '*' operator for HRRs to be circular convolution of two vectors
 HRR operator*(const HRR& hrr1, const HRR& hrr2);
+
+// Overload the '*' operator for an HRR and a scalar
+HRR operator*(const HRR& hrr, const double c);
+
+#endif  /*  HRR_OPERATORS  */

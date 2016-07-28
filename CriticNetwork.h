@@ -112,12 +112,14 @@ class CriticNetwork {
      *  TD LEARNING METHODS
      **---------------------------------------------------------------------------*/
 
-    // Get the value of a given hrr
+    // Get the values of a given hrr against a weight vector
     double V(HRR hrr, vector<double> weights);
 
     // Calculate TDError of a state
-    double TDError(HRR hrr);
+    double TDError(double r, double valueOfState, double valueOfPreviousState);
 
+    // Calculate TDError of a goal state
+    double TDError(double r, double valueOfGoal);
 };
 
 #endif      /* WMTK_CRITIC_NETWORK_H */

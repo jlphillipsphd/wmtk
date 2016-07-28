@@ -330,7 +330,7 @@ bool WorkingMemory::newEpisode(bool clear_memory) {
   ChunkFeatureVector small_vector(chunk_vector_size, translate_chunk);
   cfvector.clearVector();
   cfvector.setValue(cfvector.getSize() - 1, WMTK_FV_MAX);
-  
+
   // Need to absorb the reward from the last time step.
   critic_network->processVector(*aggregate_features);
   critic_network->processFinalTimeStep(last_reward);
@@ -368,11 +368,11 @@ bool WorkingMemory::newEpisode(bool clear_memory) {
   or_vector->clearVector();
   for (x = 0; x < number_of_active_chunks; x++)
     or_vector->makeORCode(*(chunk_features[x]), the_or_code);
-  
+
   // Setup aggregate vector for first time step
   aggregate_features->updateFeatures(*state_features, chunk_features,
 				    *or_vector);
-  
+
 
   // Clear chunk_features (allocated memory)
   for (x = 0; x < number_of_chunks; x++) {
@@ -402,7 +402,7 @@ int WorkingMemory::tickEpisodeClock(list<Chunk>& candidate_chunks, bool learn) {
   int x, y, z;	// Local counters
 
   // Store the last time step vector for later processing
-  AggregateFeatureVector* old_vector = 
+  AggregateFeatureVector* old_vector =
     new AggregateFeatureVector(*aggregate_features);
 
   // Update the state vector
@@ -474,7 +474,7 @@ int WorkingMemory::tickEpisodeClock(list<Chunk>& candidate_chunks, bool learn) {
   for (x = 0; x < number_of_chunks; x++) {
     pass_counter[x] = -1;
   }
-  
+
   bool carry = false;
   while (!carry) {
     bool duplicate = false;
@@ -483,7 +483,7 @@ int WorkingMemory::tickEpisodeClock(list<Chunk>& candidate_chunks, bool learn) {
 	if (pass_counter[y] == pass_counter[z] && pass_counter[y] !=
 	    -1 && y != z)
 	  duplicate = true;
-    
+
     // Do test on combination - no duplications allowed
     if (!duplicate) {
       combination_ptr = new WMCombo;
@@ -501,12 +501,12 @@ int WorkingMemory::tickEpisodeClock(list<Chunk>& candidate_chunks, bool learn) {
 	else {
 	  chunk_features[x] = &cfvector;
 	}
-	
+
       // Create OR code
       or_vector->clearVector();
       for (x = 0; x < number_of_active_chunks; x++)
 	or_vector->makeORCode(*(chunk_features[x]), the_or_code);
-	
+
       // Fill out aggregate feature vector
       aggregate_features->updateFeatures(*state_features, chunk_features,
 					 *or_vector);
@@ -538,7 +538,7 @@ int WorkingMemory::tickEpisodeClock(list<Chunk>& candidate_chunks, bool learn) {
       if (combinations[x]->chunks[y] == -1)
 	cout << "EMPTY ";
       else
-	cout << all_chunks[combinations[x]->chunks[y]]->getType() << " ";      
+	cout << all_chunks[combinations[x]->chunks[y]]->getType() << " ";
     }
     cout << endl;
   }
@@ -554,7 +554,7 @@ int WorkingMemory::tickEpisodeClock(list<Chunk>& candidate_chunks, bool learn) {
   // Gibbs Softmax
   double* percentages = new double[combinations.size()];
   applySoftmax(SM_CONSTANT, combinations.size(), values, percentages);
-  
+
   double c_percent = 0.0;
   double select_percent = 1.0 * rand() / (RAND_MAX + 1.0);
   for (x = 0; x < combinations.size(); x++) {
@@ -594,12 +594,12 @@ int WorkingMemory::tickEpisodeClock(list<Chunk>& candidate_chunks, bool learn) {
       working_memory_store[x] = NULL;
       chunk_features[x] = &cfvector;
     }
-    
+
   // Create OR code
   or_vector->clearVector();
   for (x = 0; x < number_of_active_chunks; x++)
     or_vector->makeORCode(*(chunk_features[x]), the_or_code);
-    
+
   // Fill out aggregate feature vector
   aggregate_features->updateFeatures(*state_features, chunk_features,
 				     *or_vector);
