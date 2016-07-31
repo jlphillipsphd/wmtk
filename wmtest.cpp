@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     string colors[] = { "red", "green", "blue", "yellow", "orange", "lime", "brown" };
 
     // Create a working memory object with the given properties
-    WorkingMemory wm(0.75, 0.9, 0.0, 0.0, 256, 2);
+    WorkingMemory wm(0.75, 0.9, 0.5, 0.0, 256, 2);
 
     for ( int i = 0; i < 200; i++) {
         wm.initializeEpisode(randomItem(colors, 7));

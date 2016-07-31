@@ -171,7 +171,7 @@ class WorkingMemory {
     double findValueOfState();
 
     // Calculate the value of a given set of working memory contents and state
-    double findValueOfWorkingMemoryContents(vector<string> contents);
+    double findValueOfContents(vector<string> contents);
 
     // Set the previous reward and value. Only accessible by WMTK
     void setPreviousReward(double previousReward);

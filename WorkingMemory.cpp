@@ -31,6 +31,7 @@
  * Mentor:    Joshua L. Phillips
  ******************************************************************************/
 #include <iostream>
+#include <algorithm>
 #include <random>
 #include "WorkingMemory.h"
 #include "hrr/hrrOperators.h"
@@ -211,6 +212,9 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
     // Store the current state
     this->state = state;
 
+    // Clear the eligibility trace
+    fill(eligibilityTrace.begin(), eligibilityTrace.end(), 0.0);
+
     // Get the candidate chunks from the state
     vector<string> candidateChunks = getCandidateChunksFromState();
 
@@ -223,11 +227,13 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
         findMostValuableChunks(candidateChunks);
     //}
 
+    HRR representation = stateAndWorkingMemoryRepresentation();
+
     // Find the value of the current state
-    double valueOfState = findValueOfWorkingMemoryContents(workingMemoryChunks);
+    double valueOfState = critic.V(representation, weights);
 
     // Update the eligibility trace of the current state for the next step
-    eligibilityTrace = ( (eligibilityTrace * critic.getLambda()) + stateAndWorkingMemoryRepresentation() ) * (1/sqrt(2));
+    eligibilityTrace = ( (eligibilityTrace * critic.getLambda()) + representation ) * (1/sqrt(2));
 
     // Finish up the initialization
     setPreviousValue(valueOfState);
@@ -262,8 +268,10 @@ void WorkingMemory::step(string state, double reward) {
         findMostValuableChunks(candidateChunks);
     //}
 
+    HRR representation = stateAndWorkingMemoryRepresentation();
+
     // Find the value of the current state
-    double valueOfState = findValueOfWorkingMemoryContents(workingMemoryChunks);
+    double valueOfState = critic.V(representation, weights);
 
     // Find the TDError between the current state and the previous state
     double TDError = critic.TDError(previousReward, valueOfState, previousValue);
@@ -274,7 +282,7 @@ void WorkingMemory::step(string state, double reward) {
     }
 
     // Update the eligibility trace of the current state for the next step
-    eligibilityTrace = ( (eligibilityTrace * critic.getLambda()) + stateAndWorkingMemoryRepresentation() ) * (1/sqrt(2));
+    eligibilityTrace = ( (eligibilityTrace * critic.getLambda()) + representation ) * (1/sqrt(2));
 
     // Store values for next time step
     setPreviousValue(valueOfState);
@@ -307,19 +315,21 @@ void WorkingMemory::absorbReward(string state, double reward) {
     //}
 
     // Find the value of the current state
-    double valueOfState = findValueOfWorkingMemoryContents(workingMemoryChunks);
+    double valueOfState = critic.V(stateAndWorkingMemoryRepresentation(), weights);
+    cout << "Value of Goal State: " << valueOfState << "\n";
 
     // Find the TDError between the current state and the previous state
     double TDError = critic.TDError(previousReward, valueOfState, previousValue);
+    cout << "TDERROR: " << TDError << "\n";
 
     // Update the weight vector
     for ( int x = 0; x < vectorSize; x++ ) {
-        weights[x] += critic.getLearningRate() * TDError * eligibilityTrace[x];
+        weights[x] += getLearningRate() * TDError * eligibilityTrace[x];
     }
 
 
     // Update the eligibility trace for the current goal state
-    eligibilityTrace = ( (eligibilityTrace * critic.getLambda()) + stateAndWorkingMemoryRepresentation() ) * (1/sqrt(2));
+    eligibilityTrace = ( (eligibilityTrace * getLambda()) + stateAndWorkingMemoryRepresentation() ) * (1/sqrt(2));
 
     // Get the value for the goal state
     double TDErrorForGoal = critic.TDError(reward, valueOfState);
@@ -429,7 +439,7 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
         */
 
         // Add the value function and comparison here
-        double valueOfContents = findValueOfWorkingMemoryContents(combination);
+        double valueOfContents = findValueOfContents(combination);
         //cout << " Value of Combination: " << valueOfContents << "\n";
 
         if ( valueOfContents > currentChunkValue ) {
@@ -468,10 +478,10 @@ HRR WorkingMemory::stateAndWorkingMemoryRepresentation() {
     }
 
     // Permute the representation of
-    //representation = permute(representation);
+    representation = permute(representation);
 
     // Convolve the representation of the WM contents with the state representation
-    representation = hrrengine.convolveHRRs(representation, stateRepresentation());
+    representation = representation * stateRepresentation();
 
     return representation;
 }
@@ -482,7 +492,7 @@ double WorkingMemory::findValueOfState() {
 }
 
 // Calculate the value of a given set of working memory contents and state
-double WorkingMemory::findValueOfWorkingMemoryContents(vector<string> contents) {
+double WorkingMemory::findValueOfContents(vector<string> contents) {
 
     // Get the convolved product of each chunk in working memory
     HRR representation = hrrengine.query(contents[0]);
@@ -490,11 +500,11 @@ double WorkingMemory::findValueOfWorkingMemoryContents(vector<string> contents) 
         representation = hrrengine.convolveHRRs(representation, hrrengine.query(contents[i]));
     }
 
-    // Permute the representation of
+    // Permute the internal representation of working memory contents
     representation = permute(representation);
 
     // Convolve the representation of the WM contents with the state representation
-    representation = hrrengine.convolveHRRs(representation, stateRepresentation());
+    representation = representation * stateRepresentation();
 
     // Calculate the value of the representation of the current state and contents
     return critic.V(representation, weights);
