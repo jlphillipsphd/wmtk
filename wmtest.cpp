@@ -24,9 +24,11 @@ int main(int argc, char** argv) {
     string colors[] = { "red", "green", "blue", "yellow", "orange", "lime", "brown" };
 
     // Create a working memory object with the given properties
-    WorkingMemory wm(0.1, 0.9, 0.5, 0.01, 64, 2);
+    WorkingMemory wm(0.1, 0.9, 0.5, 0.05, 128, 1);
 
     int successfulEpisodes = 0;
+
+    wm.resetWeights();
 
     for ( int i = 0; i <= 10000; i++) {
 
@@ -36,17 +38,17 @@ int main(int argc, char** argv) {
         naiveRandomize(colors, 7);
 
         // Initialize the episode with the first color in the array
-        wm.initializeEpisode(colors[0]);
+        wm.initializeEpisode(colors[0], 0.0);
 
         for ( int j = 1; j < 7; j++ ) {
-            wm.step(colors[j]);
+            wm.step(colors[j], 0.0);
         }
 
         // Check working memory contents for the concept "red"
         vector<string> wmc = wm.queryWorkingMemory();
         if ( find( wmc.begin(), wmc.end(), "red" ) != wmc.end() ) {
             // Reward the agent for remembering the concept red
-            wm.absorbReward("I");
+            wm.absorbReward("I", 1.0);
             successfulEpisodes++;
         } else {
             // Do not reward the agent

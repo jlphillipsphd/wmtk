@@ -219,8 +219,15 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
     // Get the candidate chunks from the state
     vector<string> candidateChunks = getCandidateChunksFromState();
 
-    // Find the most valuable chunks and store in working memory
-    findMostValuableChunks(candidateChunks);
+    // Find the most valuable chunks and store in working memory,
+    // or random under the Epsilon Soft policy
+    uniform_real_distribution<double> distribution(0.0, 1.0);
+    default_random_engine re;
+    if ( distribution(re) < getEpsilon() ) {
+        chooseRandomWorkingMemoryContents(candidateChunks);
+    } else {
+        findMostValuableChunks(candidateChunks);
+    }
 
   /**
    *  STEP 2: Store Value and Reward
@@ -275,8 +282,15 @@ void WorkingMemory::step(string state, double reward) {
         }
     }
 
-    // Find the most valuable chunks to store in working memory
-    findMostValuableChunks(candidateChunks);
+    // Find the most valuable chunks and store in working memory,
+    // or random under the Epsilon Soft policy
+    uniform_real_distribution<double> distribution(0, 1);
+    default_random_engine re;
+    if ( distribution(re) < getEpsilon() ) {
+        chooseRandomWorkingMemoryContents(candidateChunks);
+    } else {
+        findMostValuableChunks(candidateChunks);
+    }
 
   /**
    *  STEP 2: Calculate Value of State and Working Memory Contents
@@ -337,8 +351,15 @@ void WorkingMemory::absorbReward(string state, double reward) {
         }
     }
 
-    // Find the most valuable chunks to store in working memory
-    findMostValuableChunks(candidateChunks);
+    // Find the most valuable chunks and store in working memory,
+    // or random under the Epsilon Soft policy
+    uniform_real_distribution<double> distribution(0, 1);
+    default_random_engine re;
+    if ( distribution(re) < getEpsilon() ) {
+        chooseRandomWorkingMemoryContents(candidateChunks);
+    } else {
+        findMostValuableChunks(candidateChunks);
+    }
 
   /**
    *  STEP 2: Calculate Value of State and Working Memory Contents
@@ -409,6 +430,26 @@ vector<string> WorkingMemory::queryWorkingMemory() {
 // Get chunk in working memory at specific index
 string WorkingMemory::queryWorkingMemory(int atIndex) {
     return workingMemoryChunks[atIndex];
+}
+
+
+// Clear the weight vector
+void WorkingMemory::clearWeights() {
+    fill(weights.begin(), weights.end(), 0.0);
+}
+
+// Reset the weight vector to small random values between -0.01 and 0.01
+void WorkingMemory::resetWeights() {
+    uniform_real_distribution<double> distribution(-0.01, 0.01);
+    default_random_engine re;
+    fill(weights.begin(), weights.end(), distribution(re));
+}
+
+// Reset the weight vector to random values in the specified range
+void WorkingMemory::resetWeights(double lower, double upper) {
+    uniform_real_distribution<double> distribution(lower, upper);
+    default_random_engine re;
+    fill(weights.begin(), weights.end(), distribution(re));
 }
 
 

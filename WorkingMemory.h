@@ -141,6 +141,12 @@ class WorkingMemory {
     vector<string> queryWorkingMemory();
     string queryWorkingMemory(int atIndex);
 
+    // Clear the weight vector
+    void clearWeights();
+
+    // Reset weight vector
+    void resetWeights();
+    void resetWeights(double lower, double upper);
 
   //private:
 
