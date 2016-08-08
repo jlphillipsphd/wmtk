@@ -24,13 +24,13 @@ int main(int argc, char** argv) {
     string colors[] = { "red", "green", "blue", "yellow", "orange", "lime", "brown" };
 
     // Create a working memory object with the given properties
-    WorkingMemory wm(0.1, 0.9, 0.5, 0.05, 64, 1);
+    WorkingMemory wm(0.1, 0.9, 0.5, 0.05, 64, 2);
 
     int successfulEpisodes = 0;
 
     wm.resetWeights();
 
-    for ( int i = 0; i <= 50000; i++) {
+    for ( int i = 0; i <= 100000; i++) {
 
         //if (i%100 == 0) cout << "Episode: " << i << "\n";
 
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
             //printWMContents(wm);
         }
 
-        if (i%500 == 0) {
+        if (i%1000 == 0) {
             cout << i << ", " << successfulEpisodes << "\n";
             fout << i << ", " << successfulEpisodes << "\n";
             successfulEpisodes = 0;

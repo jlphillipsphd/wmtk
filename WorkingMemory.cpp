@@ -370,7 +370,7 @@ void WorkingMemory::absorbReward(string state, double reward) {
 
     // Find the value of the current state
     double valueOfState = critic.V(representation, weights);
-    cout << "Value of Absorbing State: " << valueOfState << "\n";
+    //cout << "Value of Absorbing State: " << valueOfState << "\n";
 
   /**
    *  STEP 3: Get the TD Error and Update the Weight Vector for the Previous State
@@ -535,6 +535,9 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
 }
 
 void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<string>& candidates, vector<string>& combination) {
+
+    //cout << "offset: " << offset << "\tslots: " << slots << "\n";
+
     if (slots == 0) {
 
         /*for (string chunk : combination) {
@@ -553,14 +556,15 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
     }
     for (int i = offset; i <= candidates.size() - slots; ++i) {
 
-        int begin = i;
-        if (candidates[i] != "I") {
-            begin += 1;
+        int begin = i+1;
+        if (candidates[i] == "I") {
+            begin = i;
         }
 
         combination.push_back(candidates[i]);
         findCombinationsOfCandidates(i+1, slots-1, candidates, combination);
         combination.pop_back();
+        if (offset == 0) break;
     }
 }
 
