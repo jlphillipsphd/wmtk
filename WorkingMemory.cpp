@@ -238,6 +238,7 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
 
     // Find the value of the current state and working memory contents
     double valueOfState = critic.V(representation, weights);
+    //cout << "Initial value: " << valueOfState << "\n";
 
     // Store the value and reward for use in the next step
     setPreviousValue(valueOfState);
@@ -461,17 +462,25 @@ void WorkingMemory::resetWeights(double lower, double upper) {
  vector<string> WorkingMemory::getCandidateChunksFromState() {
      vector<string> candidateChunks;
 
+     //cout << "State: " << state << "\n";
+
      // First, we separate the concepts represented in the state by splitting on
      //  the '+' character
      vector<string> stateConceptNames = HRREngine::explode(state, '+');
 
      // Now we check if there is an empty string in the list, and remove it
-     stateConceptNames.erase( remove( stateConceptNames.begin(), stateConceptNames.end(), "" ), stateConceptNames.end() );
+     stateConceptNames.erase( remove( stateConceptNames.begin(), stateConceptNames.end(), "I" ), stateConceptNames.end() );
+
+     /*cout << "State Concept Names: \t";
+     for (string name : stateConceptNames) {
+         cout << name << "-\t";
+     }
+     cout << "\n";*/
 
      // Add the identity vector to the list of candidate chunks
-     for ( int i = 0; i < workingMemorySlots(); i++ ) {
+     //for ( int i = 0; i < workingMemorySlots(); i++ ) {
         candidateChunks.push_back("I");
-     }
+     //}
 
      // Add the combinations of constituent concepts for each state concept to
      //  the list of candidate chunks
@@ -489,6 +498,11 @@ void WorkingMemory::resetWeights(double lower, double upper) {
                     unpackedConcepts.begin(), unpackedConcepts.end(),
                     candidateChunks.begin() );
      }
+
+     /*cout << "Candidate Chunks:\n";
+     for (string chunk : candidateChunks){
+         cout << chunk << "\n";
+     }*/
 
      return candidateChunks;
  }
@@ -513,6 +527,8 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
     vector<string> mostValuableChunks;
     currentChunkValue = -9999999.99;
 
+    //cout << "Find Most Valuable Chunks\n";
+
     findCombinationsOfCandidates(0, workingMemorySlots(), candidateChunks, mostValuableChunks);
 
     return;
@@ -520,6 +536,11 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
 
 void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<string>& candidates, vector<string>& combination) {
     if (slots == 0) {
+
+        /*for (string chunk : combination) {
+            cout << chunk << " | ";
+        }
+        cout << "\n";*/
 
         double valueOfContents = findValueOfContents(combination);
 
@@ -531,6 +552,12 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
         return;
     }
     for (int i = offset; i <= candidates.size() - slots; ++i) {
+
+        int begin = i;
+        if (candidates[i] != "I") {
+            begin += 1;
+        }
+
         combination.push_back(candidates[i]);
         findCombinationsOfCandidates(i+1, slots-1, candidates, combination);
         combination.pop_back();

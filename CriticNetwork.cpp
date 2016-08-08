@@ -37,6 +37,7 @@
 
  #include <fstream>
  #include <vector>
+ #include <cmath>
  #include "hrr/hrrengine.h"
  #include "hrr/hrrOperators.h"
  #include "CriticNetwork.h"
