@@ -62,8 +62,8 @@ WorkingMemory::WorkingMemory() {
 
     // Instantiate the weight vector with small random values
     uniform_real_distribution<double> distribution(-0.01, 0.01);
-    default_random_engine re;
-    weights.resize(vectorSize, distribution(re));
+    this->re.seed(0);
+    weights.resize(vectorSize, distribution(this->re));
 
     // Set up the random permutation vector
     for ( int i = 0; i < vectorSize; i++ ) {
@@ -96,7 +96,7 @@ WorkingMemory::WorkingMemory( double learningRate,
 
     // Instantiate the weight vector with small random values
     uniform_real_distribution<double> distribution(-0.01, 0.01);
-    default_random_engine re;
+    this->re.seed(0);
     this->weights.resize(vectorSize, distribution(re));
 
     // Set up the random permutation vector
@@ -111,7 +111,8 @@ WorkingMemory::WorkingMemory(const WorkingMemory& rhs) {
 
     this->critic = rhs.critic;
     this->hrrengine = rhs.hrrengine;
-
+    this->re = rhs.re;
+    
     for ( string chunk : rhs.workingMemoryChunks ) {
         this->workingMemoryChunks.push_back(chunk);
     }
@@ -222,8 +223,7 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
     // Find the most valuable chunks and store in working memory,
     // or random under the Epsilon Soft policy
     uniform_real_distribution<double> distribution(0.0, 1.0);
-    default_random_engine re;
-    if ( distribution(re) < getEpsilon() ) {
+    if ( distribution(this->re) < getEpsilon() ) {
         chooseRandomWorkingMemoryContents(candidateChunks);
     } else {
         findMostValuableChunks(candidateChunks);
@@ -285,9 +285,8 @@ void WorkingMemory::step(string state, double reward) {
 
     // Find the most valuable chunks and store in working memory,
     // or random under the Epsilon Soft policy
-    uniform_real_distribution<double> distribution(0, 1);
-    default_random_engine re;
-    if ( distribution(re) < getEpsilon() ) {
+    uniform_real_distribution<double> distribution(0.0, 1.0);
+    if ( distribution(this->re) < getEpsilon() ) {
         chooseRandomWorkingMemoryContents(candidateChunks);
     } else {
         findMostValuableChunks(candidateChunks);
@@ -354,9 +353,8 @@ void WorkingMemory::absorbReward(string state, double reward) {
 
     // Find the most valuable chunks and store in working memory,
     // or random under the Epsilon Soft policy
-    uniform_real_distribution<double> distribution(0, 1);
-    default_random_engine re;
-    if ( distribution(re) < getEpsilon() ) {
+    uniform_real_distribution<double> distribution(0.0, 1.0);
+    if ( distribution(this->re) < getEpsilon() ) {
         chooseRandomWorkingMemoryContents(candidateChunks);
     } else {
         findMostValuableChunks(candidateChunks);
@@ -442,15 +440,13 @@ void WorkingMemory::clearWeights() {
 // Reset the weight vector to small random values between -0.01 and 0.01
 void WorkingMemory::resetWeights() {
     uniform_real_distribution<double> distribution(-0.01, 0.01);
-    default_random_engine re;
-    fill(weights.begin(), weights.end(), distribution(re));
+    fill(weights.begin(), weights.end(), distribution(this->re));
 }
 
 // Reset the weight vector to random values in the specified range
 void WorkingMemory::resetWeights(double lower, double upper) {
     uniform_real_distribution<double> distribution(lower, upper);
-    default_random_engine re;
-    fill(weights.begin(), weights.end(), distribution(re));
+    fill(weights.begin(), weights.end(), distribution(this->re));
 }
 
 

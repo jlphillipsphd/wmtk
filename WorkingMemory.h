@@ -188,6 +188,10 @@ class WorkingMemory {
 
     // Undo the permutation to find the original unshuffled HRR
     HRR inversePermute(HRR permuted);
+
+    // Random number generator
+    default_random_engine re;
+  
 };
 
 #endif      /* WMTK_WORKING_MEMORY_H */
