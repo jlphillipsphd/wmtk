@@ -89,7 +89,7 @@ WorkingMemory::WorkingMemory( double learningRate,
     // Set up the hrr engine and critic network
     this->vectorSize = vectorSize;
     this->hrrengine.setVectorSize(vectorSize);
-    this->critic.setProperties(learningRate, discount, lambda, vectorSize);
+    this->critic.setProperties(learningRate, discount, lambda, epsilon, vectorSize);
 
     // Set up the eligibility trace
     this->eligibilityTrace.resize(vectorSize, 0);
@@ -219,7 +219,7 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
 
     // Get the candidate chunks from the state
     vector<string> candidateChunks = getCandidateChunksFromState();
-
+    
     // Find the most valuable chunks and store in working memory,
     // or random under the Epsilon Soft policy
     uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -495,26 +495,32 @@ void WorkingMemory::resetWeights(double lower, double upper) {
                     candidateChunks.begin() );
      }
 
-     /*cout << "Candidate Chunks:\n";
-     for (string chunk : candidateChunks){
-         cout << chunk << "\n";
-     }*/
+     // cout << "Candidate Chunks:\n";
+     // for (string chunk : candidateChunks){
+     //     cout << chunk << "\n";
+     // }
 
      return candidateChunks;
  }
 
  // Collects a random selection of candidateChunks to put in working memory
 void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> candidates) {
-     random_device rd;
+     uniform_int_distribution<int> distribution(0,candidates.size()-1);
 
-     workingMemoryChunks = { "I", "I", "I" };
-
+     // cout << workingMemorySlots() << endl;
+     // for (vector<string>::iterator itr = candidates.begin(); itr != candidates.end(); itr++)
+     //   cout << *itr << " ";
+     // cout << endl;
+     
      for (int i = 0; i < workingMemorySlots(); i++) {
-         string chunk;
-         do {
-             chunk = candidates[rd()%candidates.size()];
-         } while ( find( workingMemoryChunks.begin(), workingMemoryChunks.end(), chunk) != workingMemoryChunks.end() );
-         workingMemoryChunks[i] = chunk;
+       if (candidates.size() == 0) {
+	 workingMemoryChunks[i] = "I";
+       }
+       else {
+	 int chunk = distribution(this->re);
+	 workingMemoryChunks[i] = candidates[chunk];
+	 candidates.erase(candidates.begin() + chunk, candidates.begin() + chunk + 1);
+       }
      }
  }
 

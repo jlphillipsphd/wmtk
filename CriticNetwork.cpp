@@ -53,16 +53,18 @@ CriticNetwork::CriticNetwork() {
      alpha = ALPHA;
      gamma = GAMMA;
      lambda = LAMBDA;
-
+     epsilon = EPSILON;
+     
      vectorSize = 128;
  }
 
  // Initializing Constructor
  // Creates a critic network with the specified TD values
- CriticNetwork::CriticNetwork(double newAlpha, double newGamma, double newLambda, int newVectorSize) {
+CriticNetwork::CriticNetwork(double newAlpha, double newGamma, double newLambda, double newEpsilon, int newVectorSize) {
      alpha = newAlpha;
      gamma = newGamma;
      lambda = newLambda;
+     epsilon = newEpsilon;
 
      vectorSize = newVectorSize;
  }
@@ -72,6 +74,7 @@ CriticNetwork::CriticNetwork(const CriticNetwork& rhs) {
     this->alpha = rhs.alpha;
     this->gamma = rhs.gamma;
     this->lambda = rhs.lambda;
+    this->epsilon = rhs.epsilon;
 
     this->vectorSize = rhs.vectorSize;
 }
@@ -84,6 +87,7 @@ CriticNetwork& CriticNetwork::operator=(const CriticNetwork& rhs) {
     this->alpha = rhs.alpha;
     this->gamma = rhs.gamma;
     this->lambda = rhs.lambda;
+    this->epsilon = rhs.epsilon;
     this->vectorSize = rhs.vectorSize;
 
     return *this;
@@ -115,11 +119,13 @@ void CriticNetwork::setVectorSize(int newSize) { this->vectorSize = newSize; }
 void CriticNetwork::setProperties( double newLearningRate,
                                    double newDiscount,
                                    double newLambda,
+				   double newEpsilon,
                                    int newVectorSize ) {
 
     this->alpha = newLearningRate;
     this->gamma = newDiscount;
     this->lambda = newLambda;
+    this->epsilon = newEpsilon;
     this->vectorSize = newVectorSize;
 }
 

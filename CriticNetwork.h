@@ -41,6 +41,7 @@
 #define GAMMA    0.99
 #define LAMBDA   0.0
 #define ALPHA    0.0001
+#define EPSILON  0.01
 
 #include <fstream>
 #include <vector>
@@ -70,7 +71,7 @@ class CriticNetwork {
 
     // Initializing Constructor
     // Creates a critic network with the specified TD values
-    CriticNetwork(double newAlpha, double newGamma, double newLambda, int newVectorSize);
+    CriticNetwork(double newAlpha, double newGamma, double newLambda, double newEpsilon, int newVectorSize);
 
     // Copy-Constructor
     CriticNetwork(const CriticNetwork&);
@@ -105,6 +106,7 @@ class CriticNetwork {
     void setProperties( double newLearningRate,
                         double newDiscount,
                         double newLambda,
+			double newEpsilon,
                         int newVectorSize );
 
 
