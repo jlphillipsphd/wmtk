@@ -38,10 +38,10 @@
 #ifndef WMTK_CRITIC_NETWORK_H
 #define WMTK_CRITIC_NETWORK_H
 
-#define GAMMA    0.99
-#define LAMBDA   0.0
-#define ALPHA    0.0001
-#define EPSILON  0.01
+#define GAMMA    0.75
+#define LAMBDA   0.3
+#define ALPHA    0.1
+#define VSIZE    128
 
 #include <fstream>
 #include <vector>
@@ -53,10 +53,11 @@ class CriticNetwork {
 
   private:
 
+    //default_random_engine re;               // Random number generator
+
     double alpha;                           // The learning rate of the TD system
     double gamma;                           // The discount values of future states
     double lambda;                          // The eligibility fraction
-    double epsilon;
 
     int vectorSize;                         // Specifies the length of the vectors
 
@@ -71,7 +72,7 @@ class CriticNetwork {
 
     // Initializing Constructor
     // Creates a critic network with the specified TD values
-    CriticNetwork(double newAlpha, double newGamma, double newLambda, double newEpsilon, int newVectorSize);
+    CriticNetwork(double newAlpha, double newGamma, double newLambda, int newVectorSize/*, int newSeed*/);
 
     // Copy-Constructor
     CriticNetwork(const CriticNetwork&);
@@ -103,11 +104,12 @@ class CriticNetwork {
     void setLambda(double newLambda);
     void setEpsilon(double newEpsilon);
     void setVectorSize(int size);
+    void seed(int seed);
     void setProperties( double newLearningRate,
                         double newDiscount,
                         double newLambda,
-			double newEpsilon,
-                        int newVectorSize );
+                        int newVectorSize/*,
+                        int newSeed*/);
 
 
     /**---------------------------------------------------------------------------*

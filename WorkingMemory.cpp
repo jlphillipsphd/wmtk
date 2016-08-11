@@ -47,22 +47,26 @@ int myrandom (int i) { return std::rand()%i;}
 
 // Default Constructor
 WorkingMemory::WorkingMemory() {
-    workingMemoryChunks.resize(3);
+
+
+
+    workingMemoryChunks.resize(WMSLOTS);
 
     previousReward = 0.0;
     previousValue = 0.0;
 
     // Set up the hrr engine and critic network
-    vectorSize = 128;
+    vectorSize = VSIZE;
     hrrengine.setVectorSize(vectorSize);
     critic.setVectorSize(vectorSize);
+    setEpsilon(EPSILON);
 
     // Set up the eligibility trace
     eligibilityTrace.resize(vectorSize, 0);
 
     // Instantiate the weight vector with small random values
     uniform_real_distribution<double> distribution(-0.01, 0.01);
-    this->re.seed(0);
+    this->re.seed(SEED);
     weights.resize(vectorSize, distribution(this->re));
 
     // Set up the random permutation vector
@@ -79,7 +83,12 @@ WorkingMemory::WorkingMemory( double learningRate,
                               double lambda,
                               double epsilon,
                               int vectorSize,
-                              int numberOfChunks ) {
+                              int numberOfChunks,
+                              int newSeed ) {
+
+    //this->hrrengine.seed(newSeed - 1);
+    this->re.seed(newSeed);
+    this->critic.seed(newSeed + 1);
 
     this->workingMemoryChunks.resize(numberOfChunks);
 
@@ -89,7 +98,8 @@ WorkingMemory::WorkingMemory( double learningRate,
     // Set up the hrr engine and critic network
     this->vectorSize = vectorSize;
     this->hrrengine.setVectorSize(vectorSize);
-    this->critic.setProperties(learningRate, discount, lambda, epsilon, vectorSize);
+    this->critic.setProperties(learningRate, discount, lambda, vectorSize);
+    this->setEpsilon(epsilon);
 
     // Set up the eligibility trace
     this->eligibilityTrace.resize(vectorSize, 0);
@@ -112,7 +122,7 @@ WorkingMemory::WorkingMemory(const WorkingMemory& rhs) {
     this->critic = rhs.critic;
     this->hrrengine = rhs.hrrengine;
     this->re = rhs.re;
-    
+
     for ( string chunk : rhs.workingMemoryChunks ) {
         this->workingMemoryChunks.push_back(chunk);
     }
@@ -146,6 +156,7 @@ WorkingMemory& WorkingMemory::operator=(const WorkingMemory& rhs) {
 
     this->critic = rhs.critic;
     this->hrrengine = rhs.hrrengine;
+    this->re = rhs.re;
 
     for ( string chunk : rhs.workingMemoryChunks ) {
         this->workingMemoryChunks.push_back(chunk);
@@ -182,7 +193,7 @@ WorkingMemory& WorkingMemory::operator=(const WorkingMemory& rhs) {
 double WorkingMemory::getLearningRate() { return critic.getLearningRate(); }
 double WorkingMemory::getDiscount() { return critic.getDiscount(); }
 double WorkingMemory::getLambda() { return critic.getLambda(); }
-double WorkingMemory::getEpsilon() { return critic.getEpsilon(); }
+double WorkingMemory::getEpsilon() { return epsilon; }
 int WorkingMemory::getVectorSize() { return vectorSize; }
 int WorkingMemory::workingMemorySlots() { return workingMemoryChunks.size(); }
 
@@ -197,7 +208,7 @@ double WorkingMemory::getPreviousValue() { return previousValue; }
  void WorkingMemory::setLearningRate(double newLearningRate) { this->critic.setLearningRate(newLearningRate); }
  void WorkingMemory::setDiscount(double newDiscount) { this->critic.setDiscount(newDiscount); }
  void WorkingMemory::setLambda(double newLambda) { this->critic.setLambda(newLambda); }
- void WorkingMemory::setEpsilon(double newEpsilon) { this->critic.setEpsilon(newEpsilon); }
+ void WorkingMemory::setEpsilon(double newEpsilon) { this->epsilon = newEpsilon; }
  void WorkingMemory::setVectorSize(int newVectorSize) { this->critic.setVectorSize(newVectorSize); }
 
 
@@ -219,7 +230,7 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
 
     // Get the candidate chunks from the state
     vector<string> candidateChunks = getCandidateChunksFromState();
-    
+
     // Find the most valuable chunks and store in working memory,
     // or random under the Epsilon Soft policy
     uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -511,7 +522,7 @@ void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> candidates)
      // for (vector<string>::iterator itr = candidates.begin(); itr != candidates.end(); itr++)
      //   cout << *itr << " ";
      // cout << endl;
-     
+
      for (int i = 0; i < workingMemorySlots(); i++) {
        if (candidates.size() == 0) {
 	 workingMemoryChunks[i] = "I";

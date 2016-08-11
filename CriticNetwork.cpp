@@ -53,20 +53,18 @@ CriticNetwork::CriticNetwork() {
      alpha = ALPHA;
      gamma = GAMMA;
      lambda = LAMBDA;
-     epsilon = EPSILON;
-     
-     vectorSize = 128;
+     vectorSize = VSIZE;
+     //re.seed(SEED + 1);
  }
 
  // Initializing Constructor
  // Creates a critic network with the specified TD values
-CriticNetwork::CriticNetwork(double newAlpha, double newGamma, double newLambda, double newEpsilon, int newVectorSize) {
+CriticNetwork::CriticNetwork(double newAlpha, double newGamma, double newLambda, int newVectorSize/*, int newSeed*/) {
      alpha = newAlpha;
      gamma = newGamma;
      lambda = newLambda;
-     epsilon = newEpsilon;
-
      vectorSize = newVectorSize;
+     //re.seed(newSeed);
  }
 
  // Copy-Constructor
@@ -74,9 +72,8 @@ CriticNetwork::CriticNetwork(const CriticNetwork& rhs) {
     this->alpha = rhs.alpha;
     this->gamma = rhs.gamma;
     this->lambda = rhs.lambda;
-    this->epsilon = rhs.epsilon;
-
     this->vectorSize = rhs.vectorSize;
+    //this->re = rhs.re;
 }
 
 // Destructor
@@ -87,8 +84,8 @@ CriticNetwork& CriticNetwork::operator=(const CriticNetwork& rhs) {
     this->alpha = rhs.alpha;
     this->gamma = rhs.gamma;
     this->lambda = rhs.lambda;
-    this->epsilon = rhs.epsilon;
     this->vectorSize = rhs.vectorSize;
+    //this->re = rhs.re;
 
     return *this;
 }
@@ -101,7 +98,6 @@ CriticNetwork& CriticNetwork::operator=(const CriticNetwork& rhs) {
 double CriticNetwork::getLearningRate() { return alpha; }
 double CriticNetwork::getDiscount() { return gamma; }
 double CriticNetwork::getLambda() { return lambda; }
-double CriticNetwork::getEpsilon() { return epsilon; }
 int CriticNetwork::getVectorSize() { return vectorSize; }
 
 /**---------------------------------------------------------------------------*
@@ -111,22 +107,22 @@ int CriticNetwork::getVectorSize() { return vectorSize; }
 void CriticNetwork::setLearningRate(double newLearningRate) { this->alpha = newLearningRate; }
 void CriticNetwork::setDiscount(double newDiscount) { this->gamma = newDiscount; }
 void CriticNetwork::setLambda(double newLambda) { this->lambda = newLambda; }
-void CriticNetwork::setEpsilon(double newEpsilon) { this->epsilon = newEpsilon; }
 void CriticNetwork::setVectorSize(int newSize) { this->vectorSize = newSize; }
+void CriticNetwork::seed(int seed) { /*this->re.seed(seed);*/ }
 
 // The setProperties method allows you to set all the properties of the critic
 //  in a single call. Useful for initializing if the critic has already been constructed
 void CriticNetwork::setProperties( double newLearningRate,
                                    double newDiscount,
                                    double newLambda,
-				   double newEpsilon,
-                                   int newVectorSize ) {
+                                   int newVectorSize/*,
+                                   int newSeed*/ ) {
 
     this->alpha = newLearningRate;
     this->gamma = newDiscount;
     this->lambda = newLambda;
-    this->epsilon = newEpsilon;
     this->vectorSize = newVectorSize;
+    //this->re.seed(newSeed);
 }
 
 /**---------------------------------------------------------------------------*

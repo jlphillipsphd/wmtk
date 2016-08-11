@@ -34,6 +34,11 @@
  * Mentor:    Joshua L. Phillips
  ******************************************************************************/
 
+#define SEED     1
+#define EPSILON  0.01
+#define WMSLOTS  3
+#define VSIZE    128
+
 #include <fstream>
 #include <vector>
 #include "hrr/hrrengine.h"
@@ -62,6 +67,8 @@ class WorkingMemory {
     vector<double> eligibilityTrace;            // Tracks the eligibility of information to update in the weight vector
     vector<double> weights;                     // Stores the weight vector which will be updated to contain the information for the values of each state
 
+    default_random_engine re;                   // Random number generator
+    double epsilon;                             // The percnetage of time we use the epsilon soft policy
     vector<int> permutation;                    // The permutation vector used to permute HRRs
 
   public:
@@ -80,7 +87,8 @@ class WorkingMemory {
                   double lambda,
                   double epsilon,
                   int vectorSize,
-                  int numberOfChunks);
+                  int numberOfChunks,
+                  int newSeed = 1 );
 
     // Copy-Constructor
     WorkingMemory(const WorkingMemory&);
@@ -188,10 +196,6 @@ class WorkingMemory {
 
     // Undo the permutation to find the original unshuffled HRR
     HRR inversePermute(HRR permuted);
-
-    // Random number generator
-    default_random_engine re;
-  
 };
 
 #endif      /* WMTK_WORKING_MEMORY_H */
