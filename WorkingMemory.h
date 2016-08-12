@@ -63,6 +63,8 @@ class WorkingMemory {
     vector<double> weights;                     // Stores the weight vector which will be updated to contain the information for the values of each state
 
     vector<int> permutation;                    // The permutation vector used to permute HRRs
+  
+  bool WMdebug = false;
 
   public:
 

@@ -21,28 +21,32 @@ int main(int argc, char** argv) {
     ofstream fout;
     fout.open("results.csv");
 
+    int ncolors = 7;
     string colors[] = { "red", "green", "blue", "yellow", "orange", "lime", "brown" };
 
     // Create a working memory object with the given properties
-    WorkingMemory wm(0.1, 0.9, 0.3, 0.05, 64, 1);
+    WorkingMemory wm(0.1, 0.9, 0.3, 0.01, 64, 1);
 
     int successfulEpisodes = 0;
-
+    int nepisodes = 10000;
+    
     wm.resetWeights();
 
-    for ( int i = 0; i <= 100000; i++) {
+    for ( int i = 0; i <= nepisodes; i++) {
 
         //if (i%100 == 0) cout << "Episode: " << i << "\n";
 
         // Randomize the order of the items in the colors array
-        naiveRandomize(colors, 7);
+        naiveRandomize(colors, ncolors);
+	while (colors[ncolors-1] == "red")
+	  naiveRandomize(colors, ncolors);
 
         // Initialize the episode with the first color in the array
         wm.initializeEpisode(colors[0], 0.0);
 	// cout << colors[0] << " ";
         // printWMContents(wm);
 
-        for ( int j = 1; j < 7; j++ ) {
+        for ( int j = 1; j < ncolors-1; j++ ) {
             wm.step(colors[j], 0.0);
 	    // cout << colors[j] << " ";
             // printWMContents(wm);
@@ -53,12 +57,12 @@ int main(int argc, char** argv) {
         vector<string> wmc = wm.queryWorkingMemory();
         if ( find( wmc.begin(), wmc.end(), "red" ) != wmc.end() ) {
             // Reward the agent for remembering the concept red
-            wm.absorbReward("I", 1.0);
+            wm.absorbReward(colors[ncolors-1], 1.0);
             //printWMContents(wm);
             successfulEpisodes++;
         } else {
             // Do not reward the agent
-            wm.absorbReward("I", 0.0);
+            wm.absorbReward(colors[ncolors-1], 0.0);
             //printWMContents(wm);
         }
 
@@ -67,6 +71,7 @@ int main(int argc, char** argv) {
             fout << i << ", " << successfulEpisodes << "\n";
             successfulEpisodes = 0;
         }
+	// if (i==nepisodes-50) wm.WMdebug = true;
     }
 
     fout.close();
