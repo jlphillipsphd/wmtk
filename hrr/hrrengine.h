@@ -8,6 +8,7 @@
 
 #include <map>
 #include <vector>
+#include <random>
 
 using namespace std;
 
@@ -28,6 +29,9 @@ private:
 
 	// Double threshold is used to check if the dot product is high enough to consider two concepts equivalent
 	double threshold;
+
+    // Random number generator
+    default_random_engine re;
 
 	/**
 	 *	Private helper functions
@@ -55,7 +59,7 @@ public:
 	HRREngine();
 
     // Initializing Constructor
-    HRREngine(int vectorSize);
+    HRREngine(int vectorSize, int seed = 0);
 
     // Copy-Constructor
 
@@ -78,6 +82,9 @@ public:
 
 	// Sets the threshold
 	double setThreshold(double newThreshold);
+
+    // Set the seed for the engine's random device
+    void seed(int seed);
 
 
 	/**

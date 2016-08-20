@@ -3,13 +3,14 @@
 //  Author:			Grayson M. Dubois
 //  Mentor:			Dr. Joshua L. Phillips
 
-#include <random>
+//#include <random>
 #include <vector>
 #include <cmath>
-#include <numeric>
+//#include <numeric>
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <ctime>
 #include "hrrengine.h"
 
 using namespace std;
@@ -19,13 +20,18 @@ HRREngine::HRREngine(){
 	this->vectorSize = 128;
 
     this->conceptMemory.insert(pair<string, HRR>("I", identity()));
+    
+    this->re.seed(0);
 }
 
 // Initializing Constructor
-HRREngine::HRREngine(int vectorSize) {
+HRREngine::HRREngine(int vectorSize, int seed) {
     this->vectorSize = vectorSize;
 
     this->conceptMemory.insert(pair<string, HRR>("I", identity()));
+
+    // Initialize the hrrengine with the given seed
+    this->re.seed(seed);
 }
 
 HRREngine& HRREngine::operator=(const HRREngine& rhs) {
@@ -37,8 +43,13 @@ HRREngine& HRREngine::operator=(const HRREngine& rhs) {
 
     this->vectorSize = rhs.vectorSize;
     this->threshold = rhs.threshold;
+    this->re = rhs.re;
 
     return *this;
+}
+
+void HRREngine::seed(int seed){
+    this->re.seed(seed);
 }
 
 // Generates an hrr representation for the given vector
@@ -48,8 +59,8 @@ HRR HRREngine::generateHRR() {
 	HRR myVec( vectorSize );
 
 	// Create a random number generator to generate numbers in a gaussian distribution
-	random_device rd;
-	mt19937 e2(rd());
+	//random_device rd;
+	//mt19937 e2(rd());
 
 	// Set up the mean and standard deviation
 	double mean = 0.0;
@@ -60,7 +71,7 @@ HRR HRREngine::generateHRR() {
 
 	// For each element in the vector, generate a new value from the distribution
 	for (double & element : myVec) {
-		element = dist(e2);
+		element = dist(this->re);
 	}
 
 	return myVec;
@@ -520,8 +531,7 @@ HRR HRREngine::invertVector(HRR hrr) {
 
 // Compare two HRRs by taking their dot product and checking to see if the result is above a threshold
 bool HRREngine::compare(HRR hrr1, HRR hrr2){
-	float dotProduct = dot(hrr1, hrr2);
-	if (dotProduct >= threshold){
+	if (dot(hrr1, hrr2) >= threshold){
 		return true;
 	}
 	return false;

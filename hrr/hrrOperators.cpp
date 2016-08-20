@@ -30,7 +30,7 @@
 // Overload the '+' operator for HRRs to be the linear addition of two vectors
 HRR operator+(const HRR& hrr1, const HRR& hrr2) {
     if (hrr1.size() != hrr2.size()) {
-        std::cerr << "Cannot add two HRRs of differing size!";
+        std::cerr << "ERROR: (Operator+) Cannot add two HRRs of differing size!";
         return HRR();
     }
 
@@ -58,7 +58,6 @@ HRR operator-(const HRR& hrr1, const HRR& hrr2) {
 
     return newHRR;
 }
-
 
 // Overload the '*' operator for HRRs to be circular convolution of two vectors
 HRR operator*(const HRR& hrr1, const HRR& hrr2) {

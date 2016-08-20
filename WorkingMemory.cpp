@@ -32,10 +32,9 @@
  ******************************************************************************/
 #include <iostream>
 #include <algorithm>
-#include <random>
 #include "WorkingMemory.h"
 #include "hrr/hrrOperators.h"
-#include <math.h>
+#include <cmath>
 
 using namespace std;
 
@@ -54,6 +53,11 @@ WorkingMemory::WorkingMemory() {
 
     previousReward = 0.0;
     previousValue = 0.0;
+
+    // Seed the random engines of each part of the toolkit
+    hrrengine.seed(0);
+    this->re.seed(1);
+    critic.seed(2);
 
     // Set up the hrr engine and critic network
     vectorSize = VSIZE;
@@ -86,9 +90,9 @@ WorkingMemory::WorkingMemory( double learningRate,
                               int numberOfChunks,
                               int newSeed ) {
 
-    //this->hrrengine.seed(newSeed - 1);
-    this->re.seed(newSeed);
-    this->critic.seed(newSeed + 1);
+    this->hrrengine.seed(newSeed + 9);
+    this->re.seed(newSeed + 99);
+    this->critic.seed(newSeed + 999);
 
     this->workingMemoryChunks.resize(numberOfChunks);
 
@@ -228,6 +232,9 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
     // Store the current state
     this->state = state;
 
+    // Clear working memory contents
+    fill(workingMemoryChunks.begin(), workingMemoryChunks.end(), "I");
+
     // Get the candidate chunks from the state
     vector<string> candidateChunks = getCandidateChunksFromState();
 
@@ -289,7 +296,7 @@ void WorkingMemory::step(string state, double reward) {
 
     // Add current working memory contents to the list of candidates, as long as they are not already there
     for ( string chunk : workingMemoryChunks ) {
-        if ( find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
+        if ( chunk != "I" && find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
             candidateChunks.push_back(chunk);
         }
     }
@@ -486,7 +493,7 @@ void WorkingMemory::resetWeights(double lower, double upper) {
 
      // Add the identity vector to the list of candidate chunks
      //for ( int i = 0; i < workingMemorySlots(); i++ ) {
-        candidateChunks.push_back("I");
+     //    candidateChunks.push_back("I");
      //}
 
      // Add the combinations of constituent concepts for each state concept to
@@ -511,38 +518,86 @@ void WorkingMemory::resetWeights(double lower, double upper) {
      //     cout << chunk << "\n";
      // }
 
+     sort(candidateChunks.begin(), candidateChunks.end());
      return candidateChunks;
  }
 
  // Collects a random selection of candidateChunks to put in working memory
 void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> candidates) {
-     uniform_int_distribution<int> distribution(0,candidates.size()-1);
 
-     // cout << workingMemorySlots() << endl;
-     // for (vector<string>::iterator itr = candidates.begin(); itr != candidates.end(); itr++)
-     //   cout << *itr << " ";
-     // cout << endl;
+    // For each working memory slot
+    for (int i = 0; i < workingMemorySlots(); i++) {
 
-     for (int i = 0; i < workingMemorySlots(); i++) {
-       if (candidates.size() == 0) {
-	 workingMemoryChunks[i] = "I";
-       }
-       else {
-	 int chunk = distribution(this->re);
-	 workingMemoryChunks[i] = candidates[chunk];
-	 candidates.erase(candidates.begin() + chunk, candidates.begin() + chunk + 1);
-       }
-     }
- }
+        // If there are no candidate chunks, set the current WM chunk to the identity vector
+        //  This is the same as storing nothing in that slot of working memory
+        if (candidates.size() == 0) {
+            workingMemoryChunks[i] = "I";
+        } else {
+
+            // Get a random index for the candidate chunks
+            uniform_int_distribution<int> distribution(-1,candidates.size()-1);
+            int chunk = distribution(this->re);
+
+            // If that index is greater than 0...
+            if (chunk > 0) {
+
+                // For indices greater than 0, set the current working memory chunk to the
+                //  candidate chunk at the random index
+     	        workingMemoryChunks[i] = candidates[chunk];
+
+                // Sort the working memory contents we have filled so far, and erase the
+                //  chunk we just used from the candidates, so as not to reuse it in the future.
+    	        sort(workingMemoryChunks.begin(),workingMemoryChunks.begin()+i);
+    	        candidates.erase(candidates.begin() + chunk, candidates.begin() + chunk + 1);
+            } else {
+
+                // For indices zero or less, set current working memory chunk to identity vector
+                //  (empty working memory slot) and remove all chunks from candidate list
+    	        workingMemoryChunks[i] = "I";
+    	        while (!candidates.empty()) {
+    	            candidates.pop_back();
+                }
+            }
+        }
+    }
+}
 
 // Compare all possible combinations of candidate chunks with the
 void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
-    vector<string> mostValuableChunks;
-    currentChunkValue = -9999999.99;
 
-    //cout << "Find Most Valuable Chunks\n";
+    // Set values to restrict
+    int n = candidateChunks.size();
+    int r = (workingMemorySlots() > n) ? n : workingMemorySlots();
 
-    findCombinationsOfCandidates(0, workingMemorySlots(), candidateChunks, mostValuableChunks);
+    // Initialize a list to store combinations, filled with identity vectors
+    vector<string> combination(workingMemorySlots());
+    fill(combination.begin(),combination.end(),"I");
+
+    // Set working memory to the current (empty) combination vector
+    workingMemoryChunks = combination;
+    currentChunkValue = findValueOfContents(combination);
+
+    // For each
+    for (int x = 1; x <= r; x++) {
+        vector<bool> v(n);
+        fill(v.begin(), v.begin() + x, true);
+
+        do {
+            int fill = 0;
+            for (int i = 0; i < n; ++i) {
+    	        if (v[i]) {
+                    combination[fill++] = candidateChunks[i];
+    	        }
+            }
+
+            double valueOfContents = findValueOfContents(combination);
+
+            if ( valueOfContents >= currentChunkValue ) {
+    	        workingMemoryChunks = combination;
+    	        currentChunkValue = valueOfContents;
+            }
+        } while (prev_permutation(v.begin(), v.end()));
+    }
 
     return;
 }
@@ -601,8 +656,10 @@ HRR WorkingMemory::stateAndWorkingMemoryRepresentation() {
         representation = hrrengine.convolveHRRs(representation, hrrengine.query(workingMemoryChunks[i]));
     }
 
-    // Permute the representation of
-    representation = permute(representation);
+    // Permute the representation if it is not the identity vector
+    if ( HRREngine::dot( hrrengine.query("I"), representation ) != 1.0) {
+        representation = permute(representation);
+    }
 
     // Convolve the representation of the WM contents with the state representation
     representation = representation * stateRepresentation();

@@ -41,6 +41,7 @@
 
 #include <fstream>
 #include <vector>
+#include <random>
 #include "hrr/hrrengine.h"
 #include "CriticNetwork.h"
 
@@ -88,7 +89,7 @@ class WorkingMemory {
                   double epsilon,
                   int vectorSize,
                   int numberOfChunks,
-                  int newSeed = 1 );
+                  int seed = 1 );
 
     // Copy-Constructor
     WorkingMemory(const WorkingMemory&);

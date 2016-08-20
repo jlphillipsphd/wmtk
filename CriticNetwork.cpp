@@ -108,7 +108,7 @@ void CriticNetwork::setLearningRate(double newLearningRate) { this->alpha = newL
 void CriticNetwork::setDiscount(double newDiscount) { this->gamma = newDiscount; }
 void CriticNetwork::setLambda(double newLambda) { this->lambda = newLambda; }
 void CriticNetwork::setVectorSize(int newSize) { this->vectorSize = newSize; }
-void CriticNetwork::seed(int seed) { /*this->re.seed(seed);*/ }
+void CriticNetwork::seed(int seed) { /*this->re.seed(seed);*/    }
 
 // The setProperties method allows you to set all the properties of the critic
 //  in a single call. Useful for initializing if the critic has already been constructed
