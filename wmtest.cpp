@@ -19,7 +19,7 @@ default_random_engine re;
 
 int main(int argc, char** argv) {
 
-    srand(time(0));
+  srand(atoi(argv[1]));
 
     ofstream fout;
     fout.open("results.csv");
@@ -28,14 +28,11 @@ int main(int argc, char** argv) {
     string colors[] = { "red", "green", "blue", "yellow", "orange", "lime", "brown" };
 
     // Create a working memory object with the given properties
-    WorkingMemory wm(0.1, 0.9, 0.3, 0.01, 64, 1);
+    WorkingMemory wm(0.1, 0.9, 0.3, 0.05, 256, 1);
 
     int successfulEpisodes = 0;
-    // int nEpisodes = 10;
-    int nEpisodes = 30000;
+    int nEpisodes = 10000;
 
-    // wm.WMdebug = true;
-    
     wm.resetWeights();
 
     for ( int i = 0; i <= nEpisodes; i++) {
@@ -75,8 +72,10 @@ int main(int argc, char** argv) {
         if (i%1000 == 0) {
             cout << i << ", " << successfulEpisodes << ", " << double(successfulEpisodes) / 1000 << "\n";
             fout << i << ", " << successfulEpisodes << ", " << double(successfulEpisodes) / 1000 << "\n";
+	    if (successfulEpisodes > 900) wm.setEpsilon(0.0);
             successfulEpisodes = 0;
-        }
+	}
+	// if (i == nEpisodes-50) { wm.WMdebug = true; }
     }
 
     fout.close();
