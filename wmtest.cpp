@@ -31,8 +31,11 @@ int main(int argc, char** argv) {
     WorkingMemory wm(0.1, 0.9, 0.3, 0.01, 64, 1);
 
     int successfulEpisodes = 0;
+    // int nEpisodes = 10;
     int nEpisodes = 30000;
 
+    // wm.WMdebug = true;
+    
     wm.resetWeights();
 
     for ( int i = 0; i <= nEpisodes; i++) {

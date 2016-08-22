@@ -639,22 +639,22 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
 	currentChunkValue = valueOfContents;
       }
       
-      // if (WMdebug) { // Temporary Code block
-      // 	HRR representation = hrrengine.query(combination[0]);
-      // 	for ( int i = 1; i < combination.size(); i++ ) {
-      // 	  representation = hrrengine.convolveHRRs(representation, hrrengine.query(combination[i]));
-      // 	}
+      if (WMdebug) { // Temporary Code block
+      	HRR representation = hrrengine.query(combination[0]);
+      	for ( int i = 1; i < combination.size(); i++ ) {
+      	  representation = hrrengine.convolveHRRs(representation, hrrengine.query(combination[i]));
+      	}
 	
-      // 	// Permute the representation of
-      // 	if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
-      // 	  representation = permute(representation);
+      	// Permute the representation of
+      	if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
+      	  representation = permute(representation);
 	
-      // 	// Convolve the representation of the WM contents with the state representation
-      // 	representation = representation * stateRepresentation();
+      	// Convolve the representation of the WM contents with the state representation
+      	representation = representation * stateRepresentation();
 	
-      // 	cout << "(" << state << "|" << combination << ") = "
-      // 	     << representation[0] << ":" << valueOfContents << endl;
-      // }
+      	cout << "(" << state << "|" << combination << ") = "
+      	     << representation[0] << ":" << valueOfContents << endl;
+      }
 
     } while (prev_permutation(v.begin(), v.end()));
   }
