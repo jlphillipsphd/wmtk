@@ -9,29 +9,29 @@ using namespace std;
 
 void printWMContents(WorkingMemory& wm);
 
-template <typename T>
-T randomItem(T[], int);
+string concept(int index);
 
 template <typename T>
 void naiveRandomize(T[], int);
 
-default_random_engine re;
+string colors[] = { "red", "blue", "green", "orange",
+                    "purple", "violet", "brown", "teal",
+                    "yellow", "scarlet", "ochre", "lime"};
+
+string objects[] = {"ball", "nutcracker", "table", "car",
+                    "mouse", "phone", "pencil", "ring" ,
+                    "knife", "bottle", "key", "shirt"};
 
 int main(int argc, char** argv) {
-
     srand(time(0));
 
-    ofstream fout;
-    fout.open("results.csv");
-
-    int nColors = 7;
-    string colors[] = { "red", "green", "blue", "yellow", "orange", "lime", "brown" };
+    int nConcepts = 7;
 
     // Create a working memory object with the given properties
     WorkingMemory wm(0.1, 0.9, 0.3, 0.01, 64, 1, 1);
 
     int successfulEpisodes = 0;
-    int nEpisodes = 30000;
+    int nEpisodes = 100000;
 
     wm.resetWeights();
 
@@ -39,63 +39,50 @@ int main(int argc, char** argv) {
 
         //if (i%100 == 0) cout << "Episode: " << i << "\n";
 
-        // Randomize the order of the items in the colors array
+        // Randomize the order of the items in the colors and objects arrays
         do {
-            naiveRandomize(colors, nColors);
-        } while (colors[nColors-1] == "red");
+            naiveRandomize(colors, nConcepts);
+            naiveRandomize(objects, nConcepts);
+        } while (colors[nConcepts-1] == "red");
 
         // Initialize the episode with the first color in the array
-        wm.initializeEpisode(colors[0], 0.0);
-	// cout << colors[0] << " ";
-        // printWMContents(wm);
+        wm.initializeEpisode(concept(0), 0.0);
+        //cout << "concept(0): " << concept(0) << endl;
 
-        for ( int j = 1; j < nColors -1; j++ ) {
-            wm.step(colors[j], 0.0);
-	    // cout << colors[j] << " ";
+
+        for ( int j = 1; j < nConcepts -1; j++ ) {
+            wm.step(concept(j), 0.0);
+            //cout << "concept(" << j << "): " << concept(j) << endl;
             // printWMContents(wm);
         }
-	// printWMContents(wm);
+	    // printWMContents(wm);
 
         // Check working memory contents for the concept "red"
         vector<string> wmc = wm.queryWorkingMemory();
         if ( find( wmc.begin(), wmc.end(), "red" ) != wmc.end() ) {
             // Reward the agent for remembering the concept red
-            wm.absorbReward(colors[nColors-1], 1.0);
+            wm.absorbReward(concept(nConcepts-1), 1.0);
+            //cout << "concept(" << nConcepts-1 << "): " << concept(nConcepts-1) << endl;
             //printWMContents(wm);
             successfulEpisodes++;
         } else {
             // Do not reward the agent
-            wm.absorbReward(colors[nColors-1], 0.0);
+            wm.absorbReward(concept(nConcepts-1), 0.0);
+            //cout << "concept(" << nConcepts-1 << "): " << concept(nConcepts-1) << endl;
             //printWMContents(wm);
         }
 
         if (i%1000 == 0) {
             cout << i << ", " << successfulEpisodes << ", " << double(successfulEpisodes) / 1000 << "\n";
-            fout << i << ", " << successfulEpisodes << ", " << double(successfulEpisodes) / 1000 << "\n";
             successfulEpisodes = 0;
         }
     }
 
-    fout.close();
-
     return 0;
 }
 
-void printWMContents(WorkingMemory& wm) {
-
-    vector<string> wmContents = wm.queryWorkingMemory();
-
-    for (string chunk : wmContents) {
-        cout << chunk << " | ";
-    }
-    cout << "\n";
-
-    return;
-}
-
-template <typename T>
-T randomItem(T items[], int count) {
-    return items[rand()%count];
+string concept(int index) {
+    return (colors[index] + "*" + objects[index]);
 }
 
 template <typename T>
