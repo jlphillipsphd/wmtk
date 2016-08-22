@@ -9,6 +9,10 @@
 #include <map>
 #include <vector>
 
+#include <gsl/gsl_fft_real.h>
+#include <gsl/gsl_fft_halfcomplex.h>
+#include <gsl/gsl_complex.h>
+
 using namespace std;
 
 typedef vector<double> HRR;
@@ -35,6 +39,7 @@ private:
 
  	// Generates an hrr representation for the given vector
  	HRR generateHRR();
+ 	HRR generateUnitaryHRR();
 
 	// Helper method invertVector calculates the approximate inversion of an HRR
 	HRR invertVector(HRR hrr);
@@ -45,6 +50,11 @@ private:
     // Construct identity vector
     HRR identity();
 
+  gsl_fft_real_wavetable* real;
+  gsl_fft_halfcomplex_wavetable* hc;
+  gsl_fft_real_workspace* work;
+  void multiplycomplex(double* half1,double* half2,double* result);
+  
 public:
 
 	/**

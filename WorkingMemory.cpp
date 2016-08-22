@@ -614,7 +614,7 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
       representation = permute(representation);
     
     // Convolve the representation of the WM contents with the state representation
-    representation = representation * stateRepresentation();
+    representation = hrrengine.convolveHRRs(representation,stateRepresentation());
     
     cout << "(" << state << "|" << combination << ") = "
 	 << representation[0] << ":" << currentChunkValue << endl;
@@ -650,7 +650,7 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
       	  representation = permute(representation);
 	
       	// Convolve the representation of the WM contents with the state representation
-      	representation = representation * stateRepresentation();
+      	representation = hrrengine.convolveHRRs(representation,stateRepresentation());
 	
       	cout << "(" << state << "|" << combination << ") = "
       	     << representation[0] << ":" << valueOfContents << endl;
@@ -692,7 +692,7 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
 	    representation = permute(representation);
 	  
 	  // Convolve the representation of the WM contents with the state representation
-	  representation = representation * stateRepresentation();
+	  representation = hrrengine.convolveHRRs(representation,stateRepresentation());
 	  
 	  cout << "(" << state << "|" << combination << ") = "
 	       << representation[0] << ":" << valueOfContents << endl;
@@ -746,7 +746,7 @@ HRR WorkingMemory::stateAndWorkingMemoryRepresentation() {
       representation = permute(representation);
 
     // Convolve the representation of the WM contents with the state representation
-    representation = representation * stateRepresentation();
+    representation = hrrengine.convolveHRRs(representation,stateRepresentation());
 
     return representation;
 }
@@ -769,7 +769,7 @@ double WorkingMemory::findValueOfContents(vector<string> contents) {
     representation = permute(representation);
 
     // Convolve the representation of the WM contents with the state representation
-    representation = representation * stateRepresentation();
+    representation = hrrengine.convolveHRRs(representation,stateRepresentation());
 
     // Calculate the value of the representation of the current state and contents
     return critic.V(representation, weights);

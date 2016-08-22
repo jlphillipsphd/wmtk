@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     int nConcepts = 7;
 
     // Create a working memory object with the given properties
-    WorkingMemory wm(0.1, 0.9, 0.3, 0.01, 64, 1);
+    WorkingMemory wm(0.1, 0.9, 0.1, 0.01, 64, 1);
 
     int successfulEpisodes = 0;
     int nEpisodes = 100000;
