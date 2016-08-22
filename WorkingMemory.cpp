@@ -90,9 +90,9 @@ WorkingMemory::WorkingMemory( double learningRate,
                               int numberOfChunks,
                               int newSeed ) {
 
-    this->hrrengine.seed(newSeed + 9);
-    this->re.seed(newSeed + 99);
-    this->critic.seed(newSeed + 999);
+    this->hrrengine.seed(newSeed - 1);
+    this->re.seed(newSeed);
+    this->critic.seed(newSeed + 1);
 
     this->workingMemoryChunks.resize(numberOfChunks);
 
@@ -300,6 +300,7 @@ void WorkingMemory::step(string state, double reward) {
             candidateChunks.push_back(chunk);
         }
     }
+    sort(candidateChunks.begin(), candidateChunks.end());
 
     // Find the most valuable chunks and store in working memory,
     // or random under the Epsilon Soft policy
@@ -364,10 +365,11 @@ void WorkingMemory::absorbReward(string state, double reward) {
 
     // Add current working memory contents to the list of candidates, as long as they are not already there
     for ( string chunk : workingMemoryChunks ) {
-        if ( find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
+        if ( chunk != "I" && find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
             candidateChunks.push_back(chunk);
         }
     }
+    sort(candidateChunks.begin(), candidateChunks.end());
 
     // Find the most valuable chunks and store in working memory,
     // or random under the Epsilon Soft policy
@@ -577,7 +579,6 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
     workingMemoryChunks = combination;
     currentChunkValue = findValueOfContents(combination);
 
-    // For each
     for (int x = 1; x <= r; x++) {
         vector<bool> v(n);
         fill(v.begin(), v.begin() + x, true);
@@ -615,7 +616,7 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
 
         double valueOfContents = findValueOfContents(combination);
 
-        if ( valueOfContents > currentChunkValue ) {
+        if ( valueOfContents >= currentChunkValue ) {
             workingMemoryChunks = combination;
             currentChunkValue = valueOfContents;
         }
