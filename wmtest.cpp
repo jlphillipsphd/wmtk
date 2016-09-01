@@ -19,7 +19,12 @@ default_random_engine re;
 
 int main(int argc, char** argv) {
 
-  srand(atoi(argv[1]));
+    // Set up the seed for our random number generators
+    int seed = int(time(NULL));
+    if (argc > 1) {
+        seed = atoi(argv[1]);
+    }
+    srand(seed);
 
     ofstream fout;
     fout.open("results.csv");
@@ -28,7 +33,7 @@ int main(int argc, char** argv) {
     string colors[] = { "red", "green", "blue", "yellow", "orange", "lime", "brown" };
 
     // Create a working memory object with the given properties
-    WorkingMemory wm(0.1, 0.9, 0.1, 0.01, 64, 1);
+    WorkingMemory wm(0.1, 0.9, 0.1, 0.01, 64, seed);
 
     int successfulEpisodes = 0;
     int nEpisodes = 10000;

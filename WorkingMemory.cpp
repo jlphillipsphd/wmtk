@@ -89,6 +89,8 @@ WorkingMemory::WorkingMemory( double learningRate,
                               int vectorSize,
                               int numberOfChunks ) {
 
+    //cout << "Started iniitalizing WM\n";
+
     this->workingMemoryChunks.resize(numberOfChunks);
 
     this->previousReward = 0.0;
@@ -97,7 +99,9 @@ WorkingMemory::WorkingMemory( double learningRate,
     // Set up the hrr engine and critic network
     this->vectorSize = vectorSize;
     this->hrrengine.setVectorSize(vectorSize);
+    //cout << "HRREngine set up\n";
     this->critic.setProperties(learningRate, discount, lambda, epsilon, vectorSize);
+    //cout << "Critic set up\n";
 
     // Set up the eligibility trace
     this->eligibilityTrace.resize(vectorSize, 0);
@@ -106,12 +110,15 @@ WorkingMemory::WorkingMemory( double learningRate,
     uniform_real_distribution<double> distribution(-0.01, 0.01);
     this->re.seed(0);
     this->weights.resize(vectorSize, distribution(re));
+    //cout << "Distribution set up\n";
 
     // Set up the random permutation vector
     for ( int i = 0; i < vectorSize; i++ ) {
         permutation.push_back(i);
     }
     random_shuffle(permutation.begin(), permutation.end(), myrandom);
+    //cout << "Permutation set up\n";
+    return;
 }
 
 // Copy-Constructor
@@ -120,7 +127,7 @@ WorkingMemory::WorkingMemory(const WorkingMemory& rhs) {
     this->critic = rhs.critic;
     this->hrrengine = rhs.hrrengine;
     this->re = rhs.re;
-    
+
     for ( string chunk : rhs.workingMemoryChunks ) {
         this->workingMemoryChunks.push_back(chunk);
     }
@@ -227,7 +234,7 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
 
     // Clear working memory
     fill(workingMemoryChunks.begin(),workingMemoryChunks.end(),"I");
-    
+
     // Get the candidate chunks from the state
     vector<string> candidateChunks = getCandidateChunksFromState();
     sort(candidateChunks.begin(),candidateChunks.end());
@@ -261,7 +268,7 @@ void WorkingMemory::initializeEpisode(string state, double reward) {
 	   << representation[0] << ":" << valueOfState << " "
 	   << "[" << candidateChunks << "]" << endl;
     }
-    
+
     // Store the value and reward for use in the next step
     setPreviousValue(valueOfState);
     setPreviousReward(reward);
@@ -549,7 +556,7 @@ void WorkingMemory::resetWeights(double lower, double upper) {
 
  // Collects a random selection of candidateChunks to put in working memory
 void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> candidates) {
-  
+
   // cout << workingMemorySlots() << endl;
   // for (vector<string>::iterator itr = candidates.begin(); itr != candidates.end(); itr++)
   //   cout << *itr << " ";
@@ -574,11 +581,11 @@ void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> candidates)
       }
     }
   }
-  
+
   if (WMdebug) { // Temporary Code block
     HRR representation = stateAndWorkingMemoryRepresentation();
     double valueOfContents = findValueOfContents(workingMemoryChunks);
-    
+
     cout << "Random (" << state << "|" << workingMemoryChunks << ") = "
 	 << representation[0] << ":" << valueOfContents << endl;
   }
@@ -587,7 +594,7 @@ void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> candidates)
 
 // Compare all possible combinations of candidate chunks with the
 void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
-  
+
   //cout << "Find Most Valuable Chunks\n";
 
   // findCombinationsOfCandidates(0, workingMemorySlots(), candidateChunks, mostValuableChunks);
@@ -596,7 +603,7 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
   int r = workingMemorySlots();
   if (r > n)
     r = n;
-  
+
   vector<string> combination(workingMemorySlots());
   fill(combination.begin(),combination.end(),"I");
 
@@ -608,14 +615,14 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
     for ( int i = 1; i < combination.size(); i++ ) {
       representation = hrrengine.convolveHRRs(representation, hrrengine.query(combination[i]));
     }
-    
-    // Permute the representation of
+
+    // Permute the representation, as long as it is not the identity vector
     if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
       representation = permute(representation);
-    
+
     // Convolve the representation of the WM contents with the state representation
     representation = hrrengine.convolveHRRs(representation,stateRepresentation());
-    
+
     cout << "(" << state << "|" << combination << ") = "
 	 << representation[0] << ":" << currentChunkValue << endl;
   }
@@ -623,7 +630,7 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
   for (int x = 1; x <= r; x++) {
     vector<bool> v(n);
     fill(v.begin(), v.begin() + x, true);
-    
+
     do {
       int fill = 0;
       for (int i = 0; i < n; ++i) {
@@ -638,20 +645,20 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
 	workingMemoryChunks = combination;
 	currentChunkValue = valueOfContents;
       }
-      
+
       if (WMdebug) { // Temporary Code block
       	HRR representation = hrrengine.query(combination[0]);
       	for ( int i = 1; i < combination.size(); i++ ) {
       	  representation = hrrengine.convolveHRRs(representation, hrrengine.query(combination[i]));
       	}
-	
+
       	// Permute the representation of
       	if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
       	  representation = permute(representation);
-	
+
       	// Convolve the representation of the WM contents with the state representation
       	representation = hrrengine.convolveHRRs(representation,stateRepresentation());
-	
+
       	cout << "(" << state << "|" << combination << ") = "
       	     << representation[0] << ":" << valueOfContents << endl;
       }
@@ -686,21 +693,21 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
 	  for ( int i = 1; i < combination.size(); i++ ) {
 	    representation = hrrengine.convolveHRRs(representation, hrrengine.query(combination[i]));
 	  }
-	  
+
 	  // Permute the representation of
 	  if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
 	    representation = permute(representation);
-	  
+
 	  // Convolve the representation of the WM contents with the state representation
 	  representation = hrrengine.convolveHRRs(representation,stateRepresentation());
-	  
+
 	  cout << "(" << state << "|" << combination << ") = "
 	       << representation[0] << ":" << valueOfContents << endl;
 	}
-	
+
         return;
     }
-    
+
     // Temporary rewrite of below
     for (int i = 0; i < offset+1; i++) {
       combination.push_back(candidates[i]);

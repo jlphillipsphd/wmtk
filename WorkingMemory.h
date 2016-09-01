@@ -36,6 +36,7 @@
 
 #include <fstream>
 #include <vector>
+#include <random>
 #include "hrr/hrrengine.h"
 #include "CriticNetwork.h"
 
@@ -63,7 +64,7 @@ class WorkingMemory {
     vector<double> weights;                     // Stores the weight vector which will be updated to contain the information for the values of each state
 
     vector<int> permutation;                    // The permutation vector used to permute HRRs
-  
+
   bool WMdebug = false;
 
   public:
@@ -192,8 +193,8 @@ class WorkingMemory {
     HRR inversePermute(HRR permuted);
 
     // Random number generator
-    default_random_engine re;
-  
+    std::default_random_engine re;
+
 };
 
 #endif      /* WMTK_WORKING_MEMORY_H */
