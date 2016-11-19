@@ -19,7 +19,12 @@ default_random_engine re;
 
 int main(int argc, char** argv) {
 
-  srand(atoi(argv[1]));
+    // Set up the seed for our random number generators
+    int seed = int(time(NULL));
+    if (argc > 1) {
+        seed = atoi(argv[1]);
+    }
+    srand(seed);
 
     ofstream fout;
     fout.open("results.csv");
@@ -31,7 +36,7 @@ int main(int argc, char** argv) {
     WorkingMemory wm(0.1, 0.9, 0.1, 0.01, 64, 1);
 
     int successfulEpisodes = 0;
-    int nEpisodes = 10000;
+    int nEpisodes = 30000;
 
     wm.resetWeights();
 

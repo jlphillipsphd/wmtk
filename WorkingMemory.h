@@ -82,7 +82,8 @@ class WorkingMemory {
                   double lambda,
                   double epsilon,
                   int vectorSize,
-                  int numberOfChunks);
+                  int numberOfChunks,
+				  int seed = 1);
 
     // Copy-Constructor
     WorkingMemory(const WorkingMemory&);
