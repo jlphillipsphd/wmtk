@@ -90,6 +90,8 @@ WorkingMemory::WorkingMemory( double learningRate,
                               int numberOfChunks,
 							  int seed) {
 
+    //cout << "Started iniitalizing WM\n";
+
     this->workingMemoryChunks.resize(numberOfChunks);
 
     this->previousReward = 0.0;
@@ -98,7 +100,9 @@ WorkingMemory::WorkingMemory( double learningRate,
     // Set up the hrr engine and critic network
     this->vectorSize = vectorSize;
     this->hrrengine.setVectorSize(vectorSize);
+    //cout << "HRREngine set up\n";
     this->critic.setProperties(learningRate, discount, lambda, epsilon, vectorSize);
+    //cout << "Critic set up\n";
 
     // Set up the eligibility trace
     this->eligibilityTrace.resize(vectorSize, 0);
@@ -107,12 +111,15 @@ WorkingMemory::WorkingMemory( double learningRate,
     uniform_real_distribution<double> distribution(-0.01, 0.01);
     this->re.seed(seed);
     this->weights.resize(vectorSize, distribution(re));
+    //cout << "Distribution set up\n";
 
     // Set up the random permutation vector
     for ( int i = 0; i < vectorSize; i++ ) {
         permutation.push_back(i);
     }
     random_shuffle(permutation.begin(), permutation.end(), myrandom);
+    //cout << "Permutation set up\n";
+    return;
 }
 
 // Copy-Constructor

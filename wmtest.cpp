@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     string colors[] = { "red", "green", "blue", "yellow", "orange", "lime", "brown" };
 
     // Create a working memory object with the given properties
-    WorkingMemory wm(0.1, 0.9, 0.1, 0.01, 64, 1);
+    WorkingMemory wm(0.1, 0.9, 0.1, 0.01, 64, seed);
 
     int successfulEpisodes = 0;
     int nEpisodes = 30000;
