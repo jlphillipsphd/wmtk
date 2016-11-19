@@ -148,6 +148,8 @@ public:
 	vector<HRR> unpack(HRR);
 	void unpackRecursive(HRR, vector<HRR>&);
 
+	vector<string> unpackSimple(string);
+	vector<HRR> unpackSimple(HRR);
 
 	// Find hrr by name
 	HRR findHRRByName(string name);

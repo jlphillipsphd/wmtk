@@ -531,6 +531,21 @@ vector<HRR> HRREngine::unpack(HRR complexConcept){
 	return conceptList;
 }
 
+vector<string> HRREngine::unpackSimple(string complexConcept) {
+	return explode(complexConcept, '*');
+}
+
+vector<HRR> HRREngine::unpackSimple(HRR complexConcept) {
+	vector<HRR> conceptList;
+	vector<string> conceptNamesList = explode(query(complexConcept), '*');
+
+	for (auto s : conceptNamesList) {
+		conceptList.push_back(findHRRByName(s));
+	}
+
+	return conceptList;
+}
+
 
 // Find hrr by name
 HRR HRREngine::findHRRByName(string name){

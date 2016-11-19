@@ -538,7 +538,7 @@ void WorkingMemory::resetWeights(double lower, double upper) {
      for (string concept : stateConceptNames) {
          vector<string> candidates = candidateChunks;
 
-         vector<string> unpackedConcepts = hrrengine.unpack(concept);
+         vector<string> unpackedConcepts = hrrengine.unpackSimple(concept);
 
          candidateChunks.resize( candidates.size() + unpackedConcepts.size());
 

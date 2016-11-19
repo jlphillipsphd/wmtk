@@ -17,14 +17,20 @@ void naiveRandomize(T[], int);
 
 default_random_engine re;
 
+bool debug = true;
+
 int main(int argc, char** argv) {
 
-    // Set up the seed for our random number generators
+    if (debug) printf("Initializing command line arguments\n");
+
+	// Set up the seed for our random number generators
     int seed = int(time(NULL));
-    if (argc > 1) {
+    if (argc == 2) {
         seed = atoi(argv[1]);
     }
     srand(seed);
+
+    if (debug) printf("Opening results.csv\n");
 
     ofstream fout;
     fout.open("results.csv");
@@ -32,8 +38,12 @@ int main(int argc, char** argv) {
     int nColors = 7;
     string colors[] = { "red", "green", "blue", "yellow", "orange", "lime", "brown" };
 
+    if (debug) printf("Instantiating WM\n");
+
     // Create a working memory object with the given properties
     WorkingMemory wm(0.1, 0.9, 0.1, 0.01, 64, seed);
+
+    if (debug) printf("Preparing simulation\n");
 
     int successfulEpisodes = 0;
     int nEpisodes = 30000;
