@@ -92,6 +92,8 @@ WorkingMemory::WorkingMemory( double learningRate,
 
     //cout << "Started iniitalizing WM\n";
 
+    //cout << "Started iniitalizing WM\n";
+
     this->workingMemoryChunks.resize(numberOfChunks);
 
     this->previousReward = 0.0;
