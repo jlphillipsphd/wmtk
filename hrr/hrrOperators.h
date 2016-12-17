@@ -45,4 +45,7 @@ HRR operator*(const HRR& hrr1, const HRR& hrr2);
 // Overload the '*' operator for an HRR and a scalar
 HRR operator*(const HRR& hrr, const double c);
 
+// Overloads the "<<" operator for an HRR
+std::ostream& operator<<(std::ostream& os, const HRR hrr);
+
 #endif  /*  HRR_OPERATORS  */

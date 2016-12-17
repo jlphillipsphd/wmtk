@@ -71,7 +71,9 @@ WorkingMemory::WorkingMemory() {
     // Instantiate the weight vector with small random values
     uniform_real_distribution<double> distribution(-0.01, 0.01);
     this->re.seed(1);
-    weights.resize(vectorSize, distribution(this->re));
+    for (int i = 0; i < vectorSize; i++) {
+        weights.push_back(distribution(this->re));
+    }
 
     // Set up the random permutation vector
     for ( int i = 0; i < vectorSize; i++ ) {
@@ -112,8 +114,9 @@ WorkingMemory::WorkingMemory( double learningRate,
     // Instantiate the weight vector with small random values
     uniform_real_distribution<double> distribution(-0.01, 0.01);
     this->re.seed(seed);
-    this->weights.resize(vectorSize, distribution(re));
-    //cout << "Distribution set up\n";
+    for (int i = 0; i < vectorSize; i++) {
+        weights.push_back(distribution(this->re));
+    }
 
     // Set up the random permutation vector
     for ( int i = 0; i < vectorSize; i++ ) {

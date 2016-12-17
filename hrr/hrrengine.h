@@ -18,7 +18,7 @@ using namespace std;
 typedef vector<double> HRR;
 
 class HRREngine {
-private:
+public:
 
 	/**
 	 *	Private data members

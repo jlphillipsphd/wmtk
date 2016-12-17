@@ -109,3 +109,12 @@ HRR operator*(const HRR& hrr, const double c) {
     }
     return vector;
 }
+
+// Overload the "<<" operator for outputting an HRR
+std::ostream& operator<<(std::ostream& os, const HRR hrr) {
+	os << hrr[0];
+	for (int i = 1; i < hrr.size(); i++) {
+		os << " " << hrr[i];
+	}
+	return os;
+}
