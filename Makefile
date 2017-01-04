@@ -1,10 +1,10 @@
-all: test.exe complex-test.exe temp.exe
+all: 1stage
 
-test.exe : CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp wmtest.cpp
-	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp wmtest.cpp -lgsl -lblas -o test.exe
+1stage: CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_hrr_1d_wm_1stage.cpp
+	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_hrr_1d_wm_1stage.cpp -lgsl -lblas -o 1stage
 
-complex-test.exe : CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp complex-test.cpp
-	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp complex-test.cpp -lgsl -lblas -o complex-test.exe
+1stage_Wall: CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_hrr_1d_wm_1stage.cpp
+	g++ -g -Wall -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_hrr_1d_wm_1stage.cpp -lgsl -lblas -o 1stage
 
-temp.exe : temp.cpp
-	g++ -g -std=c++11 temp.cpp -o temp.exe
+test : CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp test.cpp
+	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp test.cpp -lgsl -lblas -o test

@@ -20,20 +20,22 @@
 
 #include "hrrengine.h"
 
+// MJ: where is threshold set?
+
 using namespace std;
 
 // Default constructor. Sets vector size to 128
-HRREngine::HRREngine(){
-  this->vectorSize = 128;
+HRREngine::HRREngine() : re(1){
+    this->vectorSize = 128;
     this->real = gsl_fft_real_wavetable_alloc(this->vectorSize);
     this->hc = gsl_fft_halfcomplex_wavetable_alloc(this->vectorSize);
     this->work = gsl_fft_real_workspace_alloc(this->vectorSize);
-	
+        
     this->conceptMemory.insert(pair<string, HRR>("I", identity()));
 }
 
 // Initializing Constructor
-HRREngine::HRREngine(int vectorSize) {
+HRREngine::HRREngine(int vectorSize, int random_seed) : re(random_seed) {
     this->vectorSize = vectorSize;
     this->real = gsl_fft_real_wavetable_alloc(this->vectorSize);
     this->hc = gsl_fft_halfcomplex_wavetable_alloc(this->vectorSize);
@@ -66,15 +68,15 @@ HRR HRREngine::generateUnitaryHRR() {
   size_t i;
   HRR myVec( vectorSize );
   double* halfc = &(myVec[0]);
-  random_device rd;
-  mt19937 e2(rd());
+  //random_device rd;
+  //mt19937 e2(rd());
   uniform_real_distribution<double> dist(-M_PI, M_PI);
   
   // Set first element
   halfc[0] = 1.0;
   
   for (i = 1; i < this->vectorSize - i; i++) {      
-    a = gsl_complex_polar(1.0, dist(e2));
+    a = gsl_complex_polar(1.0, dist(this->re));
     halfc[2 * i - 1] = GSL_REAL(a);
     halfc[2 * i] = GSL_IMAG(a);
   }
@@ -96,8 +98,8 @@ HRR HRREngine::generateHRR() {
 	HRR myVec( vectorSize );
 
 	// Create a random number generator to generate numbers in a gaussian distribution
-	random_device rd;
-	mt19937 e2(rd());
+	//random_device rd;
+	//mt19937 e2(rd());
 
 	// Set up the mean and standard deviation
 	double mean = 0.0;
@@ -108,7 +110,7 @@ HRR HRREngine::generateHRR() {
 
 	// For each element in the vector, generate a new value from the distribution
 	for (double & element : myVec) {
-		element = dist(e2);
+		element = dist(this->re);
 	}
 
 	return myVec;
@@ -369,8 +371,6 @@ HRR HRREngine::query(string name){
 	// Reorder the string
 	name = reorderNameLex(name);
 
-    //cout << "Queried Name: " << name << "\n";
-
 	vector<string> strings = explode(name, '*');
 
 	// See if a value exists for this concept in the map
@@ -553,7 +553,8 @@ HRR HRREngine::findHRRByName(string name){
 		if (concept.first == name) return concept.second;
     }
 
-    cout << "No HRR found for concept: " << name << "\n";
+    // MJ: having an empty result is a valid case, so don't print an error here
+    //cout << "No HRR found for concept: " << name << "\n";
 	vector<double> newVector;
 	return newVector;
 }

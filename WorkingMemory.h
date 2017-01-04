@@ -56,6 +56,7 @@ class WorkingMemory {
     string state;                               // The current state
     double currentChunkValue;                   // The current value of the chunks and the state
 
+    HRR previousStateWorkingMemoryHRR;       	// Previous state/WM combination
     double previousReward;                      // Reward of the previous state
     double previousValue;                       // Value of the previous state
 
@@ -64,8 +65,6 @@ class WorkingMemory {
     vector<double> weights;                     // Stores the weight vector which will be updated to contain the information for the values of each state
 
     vector<int> permutation;                    // The permutation vector used to permute HRRs
-
-  bool WMdebug = false;
 
   public:
 
@@ -84,7 +83,7 @@ class WorkingMemory {
                   double epsilon,
                   int vectorSize,
                   int numberOfChunks,
-				  int seed = 1);
+                  int seed = 1);
 
     // Copy-Constructor
     WorkingMemory(const WorkingMemory&);
@@ -106,7 +105,6 @@ class WorkingMemory {
     double getEpsilon();
     int getVectorSize();
     int workingMemorySlots();
-
     double getPreviousReward();
     double getPreviousValue();
 
@@ -127,18 +125,18 @@ class WorkingMemory {
      *------------------------------------------------------------------------*/
 
     // Initialize the episode.
-    //  Takes the string representation of the initial state and an optional
+    //  Takes the string representation of the initial state and an optional 
     //  value for the reward at that state (typically 0). Sets the episode up.
-    void initializeEpisode(string state, double reward = 0.0);
+    void initializeEpisode(string state, double previous_reward = 0.0);
 
     // Take a step in the episode.
     //  Takes the string representation of the current state and an optional
     //  value for the reward at that state (typically 0). Calculates a guess of
     //  what information is most valuable to retain from current state.
-    void step(string state, double reward = 0.0);
+    void step(string state, double previous_reward = 0.0);
 
     // Get the final reward and finish the episode.
-    void absorbReward(string state, double reward = 1.0);
+    void absorbReward(double reward = 1.0);
 
 
     // Get chunks currently held in working memory
@@ -180,10 +178,22 @@ class WorkingMemory {
     // Calculate the value of the current state
     double findValueOfState();
 
-    // Calculate the value of a given set of working memory contents and state
+    // MJ: added this so that we can find the value of the next possible states and pick the best one
+    // Calculate the value of a given state using the current working memory contents
+    double findValueOfStateWM(vector<string> state);
+
+    // Calculate the value of a given state
+    double findValueOfState(vector<string> state);
+
+    // Calculate the value of a given set of working memory contents and current state
     double findValueOfContents(vector<string> contents);
 
+    // MJ: currently only used for debugging
+    // Calculate the value of a given set of working memory contents and a given state
+    double findValueOfStateContents(vector<string> state, vector<string> contents);
+
     // Set the previous reward and value. Only accessible by WMTK
+    void setPreviousStateWorkingMemory(HRR previousStateWM);
     void setPreviousReward(double previousReward);
     void setPreviousValue(double previousValue);
 
@@ -193,9 +203,11 @@ class WorkingMemory {
     // Undo the permutation to find the original unshuffled HRR
     HRR inversePermute(HRR permuted);
 
-    // Random number generator
-    std::default_random_engine re;
+    // MJ: Debug function
+    void printWMContents();
 
+    // Random number generator
+    std::mt19937 re;
 };
 
 #endif      /* WMTK_WORKING_MEMORY_H */
