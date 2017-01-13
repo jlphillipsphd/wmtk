@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     // The number of positions in the 1d world
     int num_states = 20;
     // The number of trials
-    int num_episodes = 10000;
+    int num_episodes = 50000;
     // The steps alloted to reach goal within an episode
     int num_steps = 100;
 
@@ -69,9 +69,7 @@ int main(int argc, char *argv[])
 
     // Define WM parameters
     int hrr_size = 1024;
-    double learn_rate = .5;
-    //double learn_rate = .1;
-    //double learn_rate = 1;
+    double learn_rate = .25;
     double gamma = .9;
     double lambda = .3;
     double epsilon = .03;
@@ -120,7 +118,30 @@ int main(int argc, char *argv[])
         }
         if( episode % 500 == 0 )
         {
-            // signal trace
+            // signal trace 1
+            cout << "Episode: " << episode << endl;
+            for( int j=0; j < metas.size(); ++j )
+            {
+                vector<string> contents = vector<string>{ metas[j] };
+                for( int i = 0; i < num_states; ++i )
+                {
+                    vector<string> state = vector<string>{ to_string(i) };
+                    double val = wm.findValueOfStateContents( state, contents );
+                    cout << val << " ";
+                }
+                cout << endl;
+            }
+            vector<string> contents = vector<string>{ "I" };
+            for( int i = 0; i < num_states; ++i )
+            {
+                vector<string> state = vector<string>{ to_string(i) };
+                double val = wm.findValueOfStateContents( state, contents );
+                cout << val << " ";
+            }
+            cout << endl << endl;
+
+            /*
+            // signal trace 2
             for( int j=0; j < metas.size(); ++j )
             {
                 for( int k=0; k < metas.size(); ++k )
@@ -163,6 +184,7 @@ int main(int argc, char *argv[])
                 }
                 cout << endl << endl;
             }
+            */
         }
     }
 }
