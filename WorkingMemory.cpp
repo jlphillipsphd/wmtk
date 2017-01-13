@@ -270,15 +270,6 @@ void WorkingMemory::initializeEpisode(string state, double previous_reward) {
     */
 
     fill(eligibilityTrace.begin(), eligibilityTrace.end(), 0.0);
-
-    /**
-    *  STEP 4: Initialize the Eligibility Trace
-    */
-    /* MJ - eligibility trace fix
-    for (int x = 0; x < vectorSize; x++) {
-        eligibilityTrace[x] += representation[x];
-    }
-    */
 }
 
 // Take a step in the episode.
@@ -288,7 +279,7 @@ void WorkingMemory::initializeEpisode(string state, double previous_reward) {
 void WorkingMemory::step(string state, double previous_reward) {
 
     /**
-    *  STEP 0: Update eligibility trace
+    *  STEP 1: Update eligibility trace
     */
 
     for (int x = 0; x < vectorSize; x++) {
@@ -297,7 +288,7 @@ void WorkingMemory::step(string state, double previous_reward) {
     }
 
     /**
-    *  STEP 1: Get the Working Memory Contents
+    *  STEP 2: Get the Working Memory Contents
     */
 
     // Store the current state
@@ -324,7 +315,7 @@ void WorkingMemory::step(string state, double previous_reward) {
     }
 
     /**
-    *  STEP 2: Calculate Value of State and Working Memory Contents
+    *  STEP 3: Calculate Value of State and Working Memory Contents
     */
 
     HRR representation = stateAndWorkingMemoryRepresentation();
@@ -333,7 +324,7 @@ void WorkingMemory::step(string state, double previous_reward) {
     double valueOfState = critic.V(representation, weights);
 
     /**
-    *  STEP 3: Get the TD Error and Update the Weight Vector for the Previous State
+    *  STEP 4: Get the TD Error and Update the Weight Vector for the Previous State
     */
 
     // Find the TDError between the current state and the previous state
@@ -343,18 +334,6 @@ void WorkingMemory::step(string state, double previous_reward) {
     for ( int x = 0; x < vectorSize; x++ ) {
         weights[x] += getLearningRate() * TDError * eligibilityTrace[x];
     }
-
-    /**
-    *  STEP 4: Update the Eligibility Trace and Set the Value and Reward
-    */
-
-    /* MJ - eligibility trace fix
-    // Update the eligibility trace of the current state for the next step
-    for (int x = 0; x < vectorSize; x++) {
-        eligibilityTrace[x] *= getLambda();
-        eligibilityTrace[x] += representation[x];
-    }
-    */
 
     // Store values for next time step
     setPreviousStateWorkingMemory(representation);
@@ -374,79 +353,6 @@ void WorkingMemory::absorbReward(double reward) {
         eligibilityTrace[x] += previousStateWorkingMemoryHRR[x];
     }
 
-    // MJ: Not sure if we're doing this twice. Is the STEP 1 section covered in the step/initializeEpisode method?
-    /**
-    *  STEP 1: Get the Working Memory Contents
-    */
-/*
-    // Store the current state
-    this->state = state;
-
-    // Build the list of candidate chunks
-    vector<string> candidateChunks = getCandidateChunksFromState();
-
-    // Add current working memory contents to the list of candidates, as long as they are not already there
-    for ( string chunk : workingMemoryChunks ) {
-      if ( chunk != "I" && find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
-	candidateChunks.push_back(chunk);
-      }
-    }
-    sort(candidateChunks.begin(),candidateChunks.end());
-
-    // Find the most valuable chunks and store in working memory,
-    // or random under the Epsilon Soft policy
-    uniform_real_distribution<double> distribution(0.0, 1.0);
-    if ( distribution(this->re) < getEpsilon() ) {
-        chooseRandomWorkingMemoryContents(candidateChunks);
-    } else {
-        findMostValuableChunks(candidateChunks);
-    }
-*/
-    /**
-    *  STEP 2: Calculate Value of State and Working Memory Contents
-    */
-
-    //representation = stateAndWorkingMemoryRepresentation();
-
-
-    // Find the value of the current state
-    //double valueOfState = critic.V(previousStateWorkingMemoryHRR, weights);
-
-    /**
-    *  STEP 3: Get the TD Error and Update the Weight Vector for the Previous State
-    */
-
-    /* MJ: Took this out because it isn't in the R code
-    // Find the TDError between the current state and the previous state
-    double TDError = critic.TDError(previousReward, valueOfState, previousValue);
-
-    // Update the weight vector for the previous state
-    for ( int x = 0; x < vectorSize; x++ ) {
-        weights[x] += getLearningRate() * TDError * eligibilityTrace[x];
-    }
-    */
-
-    /**
-    *  STEP 4: Calculate Value and Update for Goal
-    */
-
-    /* MJ - eligibility trace fix
-    // Update the eligibility trace for the current goal state
-    for (int x = 0; x < vectorSize; x++) {
-        eligibilityTrace[x] *= getLambda();
-        eligibilityTrace[x] += representation[x];
-    }
-    */
-
-/*
-    // DEBUG
-    if( reward == 1 )
-    {
-        printWMContents();
-	cout << "Reward: " << reward << endl;
-        cout << "Before: " << critic.V(representation, weights) << endl;
-    }
-*/
     // Get the value for the goal state
     double TDErrorForGoal = critic.TDError(reward, previousValue);
 
@@ -454,27 +360,6 @@ void WorkingMemory::absorbReward(double reward) {
     for ( int x = 0; x < vectorSize; x++ ) {
         weights[x] += getLearningRate() * TDErrorForGoal * eligibilityTrace[x];
     }
-
-/*
-    // DEBUG
-    if( reward == 1 )
-    {
-        cout << "TD Error: " << TDErrorForGoal << endl;
-        cout << "After: " << critic.V(representation, weights) << endl << endl;
-    }
-*/
-
-    /**
-    *  STEP 5: Reset Eligiblity, and Previous Value and Reward
-    */
-    /* MJ: Since AbsorbReward should always be followed by InitializeEpisode, do we need this?
-    // Clear the eligibility trace
-    fill(eligibilityTrace.begin(), eligibilityTrace.end(), 0.0);
-
-    // Set the previous value and reward
-    setPreviousValue(valueOfState);
-    setPreviousReward(0.0);
-    */
 }
 
 // Get all chunks currently held in working memory
