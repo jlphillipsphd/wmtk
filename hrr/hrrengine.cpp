@@ -20,8 +20,6 @@
 
 #include "hrrengine.h"
 
-// MJ: where is threshold set?
-
 using namespace std;
 
 // Default constructor. Sets vector size to 128
@@ -68,8 +66,6 @@ HRR HRREngine::generateUnitaryHRR() {
   size_t i;
   HRR myVec( vectorSize );
   double* halfc = &(myVec[0]);
-  //random_device rd;
-  //mt19937 e2(rd());
   uniform_real_distribution<double> dist(-M_PI, M_PI);
   
   // Set first element
@@ -96,10 +92,6 @@ HRR HRREngine::generateHRR() {
   return generateUnitaryHRR();
 	// Create a vector of vectorSize
 	HRR myVec( vectorSize );
-
-	// Create a random number generator to generate numbers in a gaussian distribution
-	//random_device rd;
-	//mt19937 e2(rd());
 
 	// Set up the mean and standard deviation
 	double mean = 0.0;
@@ -183,38 +175,10 @@ HRR HRREngine::convolveHRRs(HRR hrr1, HRR hrr2) {
 		cout << "ERROR: Cannot convolve two hrrs of differing size!\n";
 	} else {
 
-
 	  gsl_fft_real_transform(&(hrr1[0]), 1, this->vectorSize, real, work);
 	  gsl_fft_real_transform(&(hrr2[0]), 1, this->vectorSize, real, work);
 	  multiplycomplex(&(hrr1[0]), &(hrr2[0]), &(newConcept[0]));
 	  gsl_fft_halfcomplex_inverse(&(newConcept[0]), 1, this->vectorSize, this->hc, this->work);
-
-	  // Form the outer product of hrr1 and hrr2
-	// 	vector<vector<float>> outerProduct(hrr1.size());
-	// 	for (int i = 0; i < outerProduct.size(); i++){
-	// 		vector<float> newVector(hrr2.size());
-	// 		outerProduct[i] = newVector;
-	// 	}
-
-	// 	// Create the outerProduct matrix
-	// 	for (int i = 0; i < hrr1.size(); i ++) {
-	// 		for (int j = 0; j < hrr2.size(); j++) {
-	// 			outerProduct[i][j] = hrr1[i] * hrr2[j];
-	// 		}
-	// 	}
-
-	// 	// Perform circular convolution
-	// 	for (int j = 0; j < hrr1.size(); j++){
-	// 		float sum = 0;
-	// 		for (int i = j, k = 0; k <= j; i--, k++){
-	// 			sum += hrr1[i] * hrr2[k];
-
-	// 		}
-	// 		for (int i = hrr2.size()-1, k = j+1; k <= hrr2.size()-1; i--, k++){
-	// 			sum += hrr1[i] * hrr2[k];
-	// 		}
-	// 		newConcept[j] = sum;
-	// 	}
 
 	}
 
@@ -298,9 +262,6 @@ HRR HRREngine::constructConcept(vector<string> concepts){
 
 	// Base case: if there is only one concept, return the representation for that concept
 	if (concepts.size() == 1){
-
-		//cout << "\nConcept: " << concepts[0] << "\n";
-
 		// If a representation exists, return it
 		return encodeConcept(concepts[0]);
 	}
@@ -338,11 +299,6 @@ HRR HRREngine::constructConcept(vector<string> concepts){
 
 		return constructedHRR;
 	}
-}
-
-// Returns the general length of the vector
-int HRREngine::getVectorSize(){
-	return vectorSize;
 }
 
 // Sets the general length of the vector
@@ -409,8 +365,6 @@ string HRREngine::query(HRR hrr){
 		// Find the dot product of the queried hrr and the current hrr in the map
 		dotProduct = dot(hrr, concept.second);
 
-		//cout << "\nDot product of hrr and " << concept.first << ": " << dotProduct << "\n";
-
 		// If the dot product is the highest so far, then set the match to be the current representation in the map
 		if (dotProduct > threshold && dotProduct > bestMatch){
 
@@ -420,16 +374,12 @@ string HRREngine::query(HRR hrr){
 			// The new match is the name of the current concept
 			match = concept.first;
 		}
-        //cout << "End of loop\n";
 	}
-    //cout << "\n Match: " << match << "\n";
 	return match;
 }
 
 vector<string> HRREngine::unpack( string complexConcept ){
 	vector<string> conceptList;
-
-    //cout << "Concept to unpack: " << complexConcept << "\n";
 
 	unpackRecursive( reorderNameLex(complexConcept), conceptList );
 	sort( conceptList.begin(), conceptList.end() );
@@ -441,15 +391,11 @@ void HRREngine::unpackRecursive( string complexConcept, vector<string>& conceptL
 
 	complexConcept = reorderNameLex(complexConcept);
 
-    //cout << "Unpacking concept: " << complexConcept << "\n";
-
 	// Get the list of base concepts in the complexConcept
 	vector<string> concepts = explode( complexConcept, '*' );
 
 	// Base case: if there is only one concept, return the representation for that concept
 	if ( concepts.size() == 1 ) {
-
-        //cout << "Last concept: " << concepts[0] << "\n";
 
         // Check to see if the concept is in the concept list.
 		bool inList = false;
@@ -472,7 +418,7 @@ void HRREngine::unpackRecursive( string complexConcept, vector<string>& conceptL
 		}
 	}
 	// If there is more than one concept, iterate over the concepts, and construct a
-    //  representation for each list of OTHER concepts
+        //  representation for each list of OTHER concepts
 	else {
 
 		// Iterate over each concept, constructing a list if it doesn't exist for each

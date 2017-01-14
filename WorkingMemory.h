@@ -34,10 +34,15 @@
  * Mentor:    Joshua L. Phillips
  ******************************************************************************/
 
-#include <fstream>
+#include <iostream>
+#include <algorithm>
+#include <utility>
 #include <vector>
 #include <random>
+#include <math.h>
+#include "WorkingMemory.h"
 #include "hrr/hrrengine.h"
+#include "hrr/hrrOperators.h"
 #include "CriticNetwork.h"
 
 using namespace std;
@@ -56,14 +61,19 @@ class WorkingMemory {
     string state;                               // The current state
     double currentChunkValue;                   // The current value of the chunks and the state
 
-    HRR previousStateWorkingMemoryHRR;       	// Previous state/WM combination
+    HRR previousStateWorkingMemory;       	// Previous state/WM combination
+    HRR previousStateWorkingMemoryAction;       // State/WM/Action chosen while in the previous state
     double previousReward;                      // Reward of the previous state
     double previousValue;                       // Value of the previous state
+    double previousQValue;                      // Q (state/action) value of the previous state
 
-    int vectorSize;                             // The size of the hrrs and other TD vectors
+    int vectorSize;                             // The size of the HRRs and other TD vectors
     vector<double> eligibilityTrace;            // Tracks the eligibility of information to update in the weight vector
+    vector<double> actionEligibilityTrace;      // Tracks the eligibility of information to update in the weight vector
     vector<double> weights;                     // Stores the weight vector which will be updated to contain the information for the values of each state
+    vector<double> actionWeights;               // The weight vector for each action
 
+    std::mt19937 re;                            // Random number generator
     vector<int> permutation;                    // The permutation vector used to permute HRRs
 
   public:
@@ -96,48 +106,22 @@ class WorkingMemory {
 
 
     /**-----------------------------------------------------------------------*
-     *  ACCESSORS (Getters)
-     *------------------------------------------------------------------------*/
-
-    double getLearningRate();
-    double getDiscount();
-    double getLambda();
-    double getEpsilon();
-    int getVectorSize();
-    int workingMemorySlots();
-    double getPreviousReward();
-    double getPreviousValue();
-
-
-    /**-----------------------------------------------------------------------*
-     *  MUTATORS (Setters)
-     *------------------------------------------------------------------------*/
-
-    void setLearningRate(double newLearningRate);
-    void setDiscount(double newDiscount);
-    void setLambda(double newLambda);
-    void setEpsilon(double newEpsilon);
-    void setVectorSize(int newVectorSize);
-
-
-    /**-----------------------------------------------------------------------*
      *  (*MAIN DEVELOPER INTERFACE*) LEARNING PROCESS METHODS
      *------------------------------------------------------------------------*/
 
     // Initialize the episode.
     //  Takes the string representation of the initial state and an optional 
     //  value for the reward at that state (typically 0). Sets the episode up.
-    void initializeEpisode(string state, double previous_reward = 0.0);
+    string initializeEpisode(string state, vector<string> possibleActions, double reward = 0.0);
 
     // Take a step in the episode.
     //  Takes the string representation of the current state and an optional
     //  value for the reward at that state (typically 0). Calculates a guess of
     //  what information is most valuable to retain from current state.
-    void step(string state, double previous_reward = 0.0);
+    string step(string state, vector<string> possibleActions, double reward = 0.0);
 
     // Get the final reward and finish the episode.
     void absorbReward(double reward = 1.0);
-
 
     // Get chunks currently held in working memory
     vector<string> queryWorkingMemory();
@@ -155,6 +139,9 @@ class WorkingMemory {
     /**-----------------------------------------------------------------------*
      *  HELPER METHODS
      *------------------------------------------------------------------------*/
+
+    // Create a weight vector for the action being taken if it doesn't exist
+    void createActionWeights(string action);
 
     // Unpack the state into a vector of possible candidates for working memory
     vector<string> getCandidateChunksFromState();
@@ -188,14 +175,22 @@ class WorkingMemory {
     // Calculate the value of a given set of working memory contents and current state
     double findValueOfContents(vector<string> contents);
 
+    // This takes a list of possible actions and a given convolutino of state/WM contents
+    // and picks the most valuable action to perform
+    pair<string,HRR> findMostValuableAction(vector<string> possibleActions);
+
     // MJ: currently only used for debugging
     // Calculate the value of a given set of working memory contents and a given state
     double findValueOfStateContents(vector<string> state, vector<string> contents);
 
+    // MJ - I'm removing it until there's time to clean it up
+    /*
     // Set the previous reward and value. Only accessible by WMTK
     void setPreviousStateWorkingMemory(HRR previousStateWM);
+    void setPreviousAction(string setPreviousAction);
     void setPreviousReward(double previousReward);
     void setPreviousValue(double previousValue);
+    */
 
     // Perform a permutation on an HRR
     HRR permute(HRR original);
@@ -204,10 +199,7 @@ class WorkingMemory {
     HRR inversePermute(HRR permuted);
 
     // MJ: Debug function
-    void printWMContents();
-
-    // Random number generator
-    std::mt19937 re;
+    void printWMContents();    
 };
 
 #endif      /* WMTK_WORKING_MEMORY_H */

@@ -19,7 +19,7 @@ using namespace std;
 typedef vector<double> HRR;
 
 class HRREngine {
-private:
+public:
 
     /**
      *	Private data members
@@ -33,6 +33,11 @@ private:
 
     // Double threshold is used to check if the dot product is high enough to consider two concepts equivalent
     double threshold;
+
+    mt19937 re;
+    gsl_fft_real_wavetable* real;
+    gsl_fft_halfcomplex_wavetable* hc;
+    gsl_fft_real_workspace* work;
 
     /**
      *	Private helper functions
@@ -51,10 +56,6 @@ private:
     // Construct identity vector
     HRR identity();
 
-    mt19937 re;
-    gsl_fft_real_wavetable* real;
-    gsl_fft_halfcomplex_wavetable* hc;
-    gsl_fft_real_workspace* work;
     void multiplycomplex(double* half1,double* half2,double* result);
   
 public:
@@ -79,18 +80,8 @@ public:
      *	Accessors and Mutators
      */
 
-    // Returns the general vector length
-    int getVectorSize();
-
     // Sets the general vectors length
     void setVectorSize(int size);
-
-    // Returns the threshold
-    double getThreshold();
-
-    // Sets the threshold
-    double setThreshold(double newThreshold);
-
 
     /**
      *	Toolkit functions

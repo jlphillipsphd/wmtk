@@ -139,52 +139,6 @@ int main(int argc, char *argv[])
                 cout << val << " ";
             }
             cout << endl << endl;
-
-            /*
-            // signal trace 2
-            for( int j=0; j < metas.size(); ++j )
-            {
-                for( int k=0; k < metas.size(); ++k )
-                {
-                    cout << "In state: " << metas[j] << endl;
-                    cout << "In WM: " << metas[k] << endl;
-
-                    vector<string> contents = vector<string>{ metas[k] };
-                    for( int i = 0; i < num_states; ++i )
-                    {
-                        vector<string> state = vector<string>{ to_string(i) + "*" + metas[j] };
-                        double val = wm.findValueOfStateContents( state, contents );
-                        cout << i << ":" << val << " ";
-                    }
-                    cout << endl;
-                    for( int i = 0; i < num_states; ++i )
-                    {
-                        vector<string> state = vector<string>{ to_string(i) };
-                        double val = wm.findValueOfStateContents( state, contents );
-                        cout << i << ":" << val << " ";
-                    }
-                    cout << endl << endl;
-                }
-
-                cout << "In state: " << metas[j] << endl;
-                cout << "In WM: " << "I" << endl;
-                vector<string> contents = vector<string>{ "I" };
-                for( int i = 0; i < num_states; ++i )
-                {
-                    vector<string> state = vector<string>{ to_string(i) + "*" + metas[j] };
-                    double val = wm.findValueOfStateContents( state, contents );
-                    cout << i << ":" << val << " ";
-                }
-                cout << endl;
-                for( int i = 0; i < num_states; ++i )
-                {
-                    vector<string> state = vector<string>{ to_string(i) };
-                    double val = wm.findValueOfStateContents( state, contents );
-                    cout << i << ":" << val << " ";
-                }
-                cout << endl << endl;
-            }
-            */
         }
     }
 }

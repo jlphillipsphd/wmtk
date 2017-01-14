@@ -93,26 +93,9 @@ CriticNetwork& CriticNetwork::operator=(const CriticNetwork& rhs) {
     return *this;
 }
 
-
 /**---------------------------------------------------------------------------*
- *  ACCESSORS
+ *  ACCESSORS AND MUTATORS
  **---------------------------------------------------------------------------*/
-
-double CriticNetwork::getLearningRate() { return alpha; }
-double CriticNetwork::getDiscount() { return gamma; }
-double CriticNetwork::getLambda() { return lambda; }
-double CriticNetwork::getEpsilon() { return epsilon; }
-int CriticNetwork::getVectorSize() { return vectorSize; }
-
-/**---------------------------------------------------------------------------*
- *  MUTATORS
- **---------------------------------------------------------------------------*/
-
-void CriticNetwork::setLearningRate(double newLearningRate) { this->alpha = newLearningRate; }
-void CriticNetwork::setDiscount(double newDiscount) { this->gamma = newDiscount; }
-void CriticNetwork::setLambda(double newLambda) { this->lambda = newLambda; }
-void CriticNetwork::setEpsilon(double newEpsilon) { this->epsilon = newEpsilon; }
-void CriticNetwork::setVectorSize(int newSize) { this->vectorSize = newSize; }
 
 // The setProperties method allows you to set all the properties of the critic
 //  in a single call. Useful for initializing if the critic has already been constructed

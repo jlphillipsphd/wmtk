@@ -51,7 +51,7 @@ using namespace std;
 
 class CriticNetwork {
 
-  private:
+  public:
 
     double alpha;                           // The learning rate of the TD system
     double gamma;                           // The discount values of future states
@@ -84,25 +84,9 @@ class CriticNetwork {
 
 
     /**-----------------------------------------------------------------------*
-     *  ACCESSORS
+     *  ACCESSORS AND MUTATORS
+
      **-----------------------------------------------------------------------*/
-
-    double getLearningRate();
-    double getDiscount();
-    double getLambda();
-    double getEpsilon();
-    int getVectorSize();
-
-
-    /**-----------------------------------------------------------------------*
-     *  MUTATORS
-     **-----------------------------------------------------------------------*/
-
-    void setLearningRate(double newLearningRate);
-    void setDiscount(double newDiscount);
-    void setLambda(double newLambda);
-    void setEpsilon(double newEpsilon);
-    void setVectorSize(int size);
     void setProperties( double newLearningRate,
                         double newDiscount,
                         double newLambda,
