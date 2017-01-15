@@ -99,7 +99,7 @@ class CriticNetwork {
      **---------------------------------------------------------------------------*/
 
     // Get the values of a given hrr against a weight vector
-    double V(HRR hrr, vector<double> weights);
+    double V(HRR hrr, vector<double> weights, double bias);
 
     // Calculate TDError of a state
     double TDError(double r, double valueOfState, double valueOfPreviousState);

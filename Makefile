@@ -1,10 +1,10 @@
-all: 1stage
+all: 
 
-1stage: CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_hrr_1d_wm_1stage.cpp
-	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_hrr_1d_wm_1stage.cpp -lgsl -lblas -o 1stage
+1d_q: CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_q_hrr_1d_wm.cpp
+	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_q_hrr_1d_wm.cpp -lgsl -lblas -o 1d_q
 
-1stage_Wall: CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_hrr_1d_wm_1stage.cpp
-	g++ -g -Wall -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_hrr_1d_wm_1stage.cpp -lgsl -lblas -o 1stage
+1d_noq: CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_noq_hrr_1d_wm.cpp
+	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_noq_hrr_1d_wm.cpp -lgsl -lblas -o 1d_noq
 
 temporalMemoryTest : CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp temporalMemoryTest.cpp
 	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp temporalMemoryTest.cpp -lgsl -lblas -o temporalMemoryTest

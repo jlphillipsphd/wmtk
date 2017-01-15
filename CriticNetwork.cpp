@@ -117,8 +117,8 @@ void CriticNetwork::setProperties( double newLearningRate,
  **---------------------------------------------------------------------------*/
 
 // Get the values of a given hrr against a weight vector
-double CriticNetwork::V(HRR hrr, vector<double> weights) {
-    return HRREngine::dot(hrr, weights);
+double CriticNetwork::V(HRR hrr, vector<double> weights, double bias) {
+    return HRREngine::dot(hrr, weights) + bias;
 }
 
 // Calculate TDError of a state

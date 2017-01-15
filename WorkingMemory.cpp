@@ -63,8 +63,11 @@ WorkingMemory::WorkingMemory() : re(1) {
     this->workingMemoryChunks.resize(3);
 
     // Set values for previous state
+    // previousValue and previousQValue must equal the bias term or else the 
+    // first TD adjustment will be much greater than the rest
     this->previousReward = 0.0;
-    this->previousValue = 0.0;
+    this->previousValue = 1.0;
+    this->previousQValue = 1.0;
 
     // Set up the hrr engine and critic network
     this->vectorSize = 128;
@@ -88,6 +91,9 @@ WorkingMemory::WorkingMemory() : re(1) {
         this->actionWeights[i] = distribution(re);
     }
 
+    // Set the bias term; this will never change
+    this->bias = 1.0;
+
     // Set up the random permutation vector
     for ( int i = 0; i < this->vectorSize; i++ ) {
         this->permutation.push_back(i);
@@ -102,6 +108,7 @@ WorkingMemory::WorkingMemory( double learningRate,
                               double lambda,
                               double epsilon,
                               int vectorSize,
+                              double bias,
                               int numberOfChunks,
                               int seed) : re(seed), hrrengine(seed) {
 
@@ -109,8 +116,11 @@ WorkingMemory::WorkingMemory( double learningRate,
     this->workingMemoryChunks.resize(numberOfChunks);
 
     // Set values for previous state
+    // previousValue and previousQValue must equal the bias term or else the 
+    // first TD adjustment will be much greater than the rest 
     this->previousReward = 0.0;
-    this->previousValue = 0.0;
+    this->previousValue = bias;
+    this->previousQValue = bias;
 
     // Set up the hrr engine and critic network
     this->vectorSize = vectorSize;
@@ -129,10 +139,13 @@ WorkingMemory::WorkingMemory( double learningRate,
     }
 
     // Instantiate the action weight vector with small random values
-    this->actionWeights.resize(vectorSize);
-    for ( int i = 0; i < vectorSize; i++ ) {
+    this->actionWeights.resize(this->vectorSize);
+    for ( int i = 0; i < this->vectorSize; i++ ) {
         this->actionWeights[i] = distribution(re);
     }
+
+    // Set the bias term; this will never change
+    this->bias = bias;
 
     // Set up the random permutation vector
     for ( int i = 0; i < vectorSize; i++ ) {
@@ -177,6 +190,8 @@ WorkingMemory::WorkingMemory(const WorkingMemory& rhs) {
     for ( int i = 0; i < rhs.vectorSize; i++ ) {
         this->actionWeights[i] = rhs.actionWeights[i];
     }
+
+    this->bias = rhs.bias;
 
     this->permutation.resize(rhs.vectorSize);
     for ( int i = 0; i < rhs.vectorSize; i++ ) {
@@ -223,6 +238,8 @@ WorkingMemory& WorkingMemory::operator=(const WorkingMemory& rhs) {
         this->actionWeights[i] = rhs.actionWeights[i];
     }
 
+    this->bias = rhs.bias;
+
     this->permutation.resize(rhs.vectorSize);
     for ( int i = 0; i < rhs.vectorSize; i++ ) {
         this->permutation[i] = rhs.permutation[i];
@@ -236,69 +253,16 @@ WorkingMemory& WorkingMemory::operator=(const WorkingMemory& rhs) {
  *  (*MAIN DEVELOPER INTERFACE*) LEARNING PROCESS METHODS
  *----------------------------------------------------------------------------*/
 
-// Initialize the episode.
-//  Takes the string representation of the initial state and an optional
-//  value for the reward at that state (typically 0). Sets the episode up.
-
-// The value returned is the recommended best action for the state based on the Q function
-string WorkingMemory::initializeEpisode(string state, vector<string> possibleActions, double reward) {
+// Initialize the episode (clears eligibility traces).
+void WorkingMemory::initializeEpisode() {
 
     /**
-    *  Choose Working Memory Contents
+    *  Clear WM Slots
     */
 
-    // Store the current state
-    this->state = state;
-
-    // Clear working memory
-    fill(workingMemoryChunks.begin(),workingMemoryChunks.end(),"I");
-
-    // Get the candidate chunks from the state
-    vector<string> candidateChunks = getCandidateChunksFromState();
-    sort(candidateChunks.begin(),candidateChunks.end());
-
-    // Find the most valuable chunks and store in working memory,
-    // or random under the Epsilon Soft policy
-    uniform_real_distribution<double> distribution(0.0, 1.0);
-    if ( distribution(re) < critic.epsilon ) {
-        chooseRandomWorkingMemoryContents(candidateChunks);
-    } else {
-        findMostValuableChunks(candidateChunks);
+    for (int i = 0; i < workingMemoryChunks.size(); i++) {
+      workingMemoryChunks[i] = "I";
     }
-
-    /**
-    *  Calculate WM Value
-    */
-
-    // Get the representation of the state and current working memory contents
-    // Find its value
-    HRR representation = stateAndWorkingMemoryRepresentation();
-    double value = critic.V(representation, weights);
-
-    /**
-    *  Choose Action
-    */
-
-    // Use Q function to pick the best action for the new state/WM combo
-    // Convolve action with current state and working memory contents
-    pair<string,HRR> action = findMostValuableAction(possibleActions);
-
-    /**
-    *  Calculate Action Value
-    */
-
-    double qValue = critic.V(action.second, actionWeights);
-
-    /**
-    *  Store t-1 State Information
-    */
-
-    // Store the value and reward for use in the next step
-    previousStateWorkingMemory = representation;
-    previousValue = value;
-    previousReward = reward;
-    previousStateWorkingMemoryAction = action.second;
-    previousQValue = qValue;
 
     /**
     *  Clear WM Eligibility Trace
@@ -312,51 +276,32 @@ string WorkingMemory::initializeEpisode(string state, vector<string> possibleAct
 
     fill(actionEligibilityTrace.begin(), actionEligibilityTrace.end(), 0.0);
 
-    return action.first;
+    /**
+    *  Clear Previous Values
+    */
+    this->previousReward = 0.0;
+    this->previousValue = bias;
+    this->previousQValue = bias;
 }
 
 // Take a step in the episode.
-//  Takes the string representation of the current state and an optional
-//  value for the reward at that state (typically 0). Calculates a guess of
-//  what information is most valuable to retain from current state.
 
-// The state variable is for time t+1, action is for time t, reward is for time t
+// The state variable is for time t+1 (state to move into), 
+// action is for time t+1 (actions available in the state), 
+// reward is for time t
 
-// The value update being performed here (using variable names) is:
-//   V(previousStateWorkingMemory) = V(previousStateWorkingMemory) + 
-//   alpha*[reward + gamma*V(representation) - V(previousStateWorkingMemory)]
-
-// The Q update being performed here (using variable names) is:
-//   Q(previousStateWorkingMemory,previousAction) = Q(previousStateWorkingMemory,previousAction) +
-//   alpha*[reward + gamma*Q(representation,action) - Q(previousStateWorkingMemory,previousAction)]
+// If this is the first step after initilizing an episode then r has no meaning,
+// and should be set to the default reward for non-goal states
 
 // The value returned is the recommended best action for the state based on the Q function
 // We are assuming that this action will always be taken; otherwise the learning will not work
 string WorkingMemory::step(string state, vector<string> possibleActions, double reward) {
 
     /**
-    *  Update WM eligibility trace
-    */
-
-    for (int x = 0; x < vectorSize; x++) {
-        eligibilityTrace[x] *= critic.lambda;
-        eligibilityTrace[x] += (previousStateWorkingMemory[x] / sqrt(2));
-    }
-
-    /**
-    *  Update Action eligibility trace
-    */
-
-    for (int x = 0; x < vectorSize; x++) {
-        actionEligibilityTrace[x] *= critic.lambda;
-        actionEligibilityTrace[x] += (previousStateWorkingMemoryAction[x] / sqrt(2));
-    }
-
-    /**
     *  Choose Working Memory Contents
     */
 
-    // Store the current state
+    // Update the current state
     this->state = state;
 
     // Build the list of candidate chunks
@@ -386,7 +331,7 @@ string WorkingMemory::step(string state, vector<string> possibleActions, double 
     // Get the representation of the state and current working memory contents
     // Find its value
     HRR representation = stateAndWorkingMemoryRepresentation();
-    double value = critic.V(representation, weights);
+    double value = critic.V(representation, weights, bias);
 
     /**
     *  Choose Action
@@ -400,7 +345,8 @@ string WorkingMemory::step(string state, vector<string> possibleActions, double 
     *  Calculate Action Value
     */
 
-    double qValue = critic.V(action.second, actionWeights);
+    // TODO: This value is calculated in the findMostValuableAction method, so this is redundant
+    double qValue = critic.V(action.second, actionWeights, bias);
 
     /**
     *  Perform TD learning function for WM
@@ -427,29 +373,13 @@ string WorkingMemory::step(string state, vector<string> possibleActions, double 
     }
 
     /**
-    *  Store t-1 State Information
-    */
-
-    // Store the value and reward for use in the next step
-    previousStateWorkingMemory = representation;
-    previousValue = value;
-    previousReward = reward;
-    previousStateWorkingMemoryAction = action.second;
-    previousQValue = qValue;
-
-    return action.first;
-}
-
-// Get the final reward and finish the episode.
-void WorkingMemory::absorbReward(double reward) {
-
-    /**
     *  Update WM eligibility trace
     */
 
     for (int x = 0; x < vectorSize; x++) {
         eligibilityTrace[x] *= critic.lambda;
-        eligibilityTrace[x] += (previousStateWorkingMemory[x] / sqrt(2));
+        eligibilityTrace[x] += representation[x];
+        eligibilityTrace[x] /= sqrt(2);
     }
 
     /**
@@ -458,8 +388,24 @@ void WorkingMemory::absorbReward(double reward) {
 
     for (int x = 0; x < vectorSize; x++) {
         actionEligibilityTrace[x] *= critic.lambda;
-        actionEligibilityTrace[x] += (previousStateWorkingMemoryAction[x] / sqrt(2));
+        actionEligibilityTrace[x] += action.second[x];
+        actionEligibilityTrace[x] /= sqrt(2);
     }
+
+    /**
+    *  Store t-1 State Information
+    */
+
+    // Store the value and reward for use in the next step
+    previousValue = value;
+    previousReward = reward;
+    previousQValue = qValue;
+
+    return action.first;
+}
+
+// Get the final reward and finish the episode.
+void WorkingMemory::absorbReward(double reward) {
 
     /**
     *  Perform TD learning function for WM at Goal State
@@ -680,7 +626,7 @@ HRR WorkingMemory::stateAndWorkingMemoryRepresentation() {
 
 // Calculate the value of the current state
 double WorkingMemory::findValueOfState() {
-    return critic.V(stateRepresentation(), weights);
+    return critic.V(stateRepresentation(), weights, bias);
 }
 
 // Calculate the value of a given state
@@ -692,7 +638,7 @@ double WorkingMemory::findValueOfState(vector<string> state) {
         state_representation = state_representation + hrrengine.query(state[i]);
     }
 
-    return critic.V(state_representation, weights);
+    return critic.V(state_representation, weights, bias);
 }
 
 // MJ: added this so that we can find the value of the next possible states and pick the best one
@@ -718,7 +664,7 @@ double WorkingMemory::findValueOfStateWM(vector<string> state) {
     // Convolve the representation of the WM contents with the state representation
     representation = hrrengine.convolveHRRs(representation,state_representation);
 
-    return critic.V(representation, weights);
+    return critic.V(representation, weights, bias);
 }
 
 // Calculate the value of a given set of working memory contents and state
@@ -738,7 +684,7 @@ double WorkingMemory::findValueOfContents(vector<string> contents) {
     representation = hrrengine.convolveHRRs(representation,stateRepresentation());
 
     // Calculate the value of the representation of the current state and contents
-    return critic.V(representation, weights);
+    return critic.V(representation, weights, bias);
 }
 
 // This takes a list of possible actions and a given convolutino of state/WM contents
@@ -752,7 +698,7 @@ pair<string,HRR> WorkingMemory::findMostValuableAction(vector<string> possibleAc
     for ( int i = 0; i < possibleActions.size(); i++ ) {
 
         HRR actionRepresentation = hrrengine.convolveHRRs(hrrengine.query(possibleActions[i]),stateWMRepresentation);
-        double val = critic.V(actionRepresentation, actionWeights);
+        double val = critic.V(actionRepresentation, actionWeights, bias);
 
         if( val > bestValue )
         {
@@ -789,7 +735,37 @@ double WorkingMemory::findValueOfStateContents(vector<string> state, vector<stri
     contents_representation = hrrengine.convolveHRRs(contents_representation,state_representation);
 
     // Calculate the value of the representation of the current state and contents
-    return critic.V(contents_representation, weights);
+    return critic.V(contents_representation, weights, bias);
+}
+
+// MJ: currently only used for debugging
+// Calculate the value of a given set of working memory contents, a given state, and a given action
+double WorkingMemory::findValueOfStateContentsAction(vector<string> state, vector<string> contents, string action) {
+
+    // Get the convolved product of each chunk in working memory
+    HRR representation = hrrengine.query(contents[0]);
+    for ( int i = 1; i < contents.size(); i++ ) {
+        representation = hrrengine.convolveHRRs(representation, hrrengine.query(contents[i]));
+    }
+
+    // Permute the internal representation of working memory contents
+    if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
+        representation = permute(representation);
+
+    // State values are simply added
+    HRR state_representation = hrrengine.query(state[0]);
+    for ( int i = 1; i < state.size(); i++) {
+        state_representation = state_representation + hrrengine.query(state[i]);
+    }
+
+    // Convolve the representation of the WM contents with the state representation
+    representation = hrrengine.convolveHRRs(representation,state_representation);
+
+    // Convolve the state/WM with the action
+    representation = hrrengine.convolveHRRs(hrrengine.query(action),representation);
+
+    // Calculate the value of the representation of the current state and contents
+    return critic.V(representation, actionWeights, bias);
 }
 
 // Perform a permutation on an HRR
@@ -815,6 +791,7 @@ HRR WorkingMemory::inversePermute(HRR permuted) {
 
     return originalHRR;
 }
+
 void WorkingMemory::printWMContents()
 {
     cout << "WM Contents:" << endl;
@@ -822,4 +799,3 @@ void WorkingMemory::printWMContents()
         cout << chunk << " | ";
     cout << endl;
 }
-

@@ -61,8 +61,6 @@ class WorkingMemory {
     string state;                               // The current state
     double currentChunkValue;                   // The current value of the chunks and the state
 
-    HRR previousStateWorkingMemory;       	// Previous state/WM combination
-    HRR previousStateWorkingMemoryAction;       // State/WM/Action chosen while in the previous state
     double previousReward;                      // Reward of the previous state
     double previousValue;                       // Value of the previous state
     double previousQValue;                      // Q (state/action) value of the previous state
@@ -72,6 +70,7 @@ class WorkingMemory {
     vector<double> actionEligibilityTrace;      // Tracks the eligibility of information to update in the weight vector
     vector<double> weights;                     // Stores the weight vector which will be updated to contain the information for the values of each state
     vector<double> actionWeights;               // The weight vector for each action
+    double bias;                                // Bias term for the critic neural network
 
     std::mt19937 re;                            // Random number generator
     vector<int> permutation;                    // The permutation vector used to permute HRRs
@@ -92,6 +91,7 @@ class WorkingMemory {
                   double lambda,
                   double epsilon,
                   int vectorSize,
+                  double bias,
                   int numberOfChunks,
                   int seed = 1);
 
@@ -109,10 +109,8 @@ class WorkingMemory {
      *  (*MAIN DEVELOPER INTERFACE*) LEARNING PROCESS METHODS
      *------------------------------------------------------------------------*/
 
-    // Initialize the episode.
-    //  Takes the string representation of the initial state and an optional 
-    //  value for the reward at that state (typically 0). Sets the episode up.
-    string initializeEpisode(string state, vector<string> possibleActions, double reward = 0.0);
+    // Initialize the episode (clears eligibility traces).
+    void initializeEpisode();
 
     // Take a step in the episode.
     //  Takes the string representation of the current state and an optional
@@ -182,6 +180,10 @@ class WorkingMemory {
     // MJ: currently only used for debugging
     // Calculate the value of a given set of working memory contents and a given state
     double findValueOfStateContents(vector<string> state, vector<string> contents);
+
+    // MJ: currently only used for debugging
+    // Calculate the value of a given set of working memory contents, a given state, and a given action
+    double findValueOfStateContentsAction(vector<string> state, vector<string> contents, string action);
 
     // MJ - I'm removing it until there's time to clean it up
     /*
