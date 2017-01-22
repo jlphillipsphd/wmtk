@@ -63,11 +63,9 @@ WorkingMemory::WorkingMemory() : re(1) {
     this->workingMemoryChunks.resize(3);
 
     // Set values for previous state
-    // previousValue and previousQValue must equal the bias term or else the 
-    // first TD adjustment will be much greater than the rest
     this->previousReward = 0.0;
-    this->previousValue = 1.0;
-    this->previousQValue = 1.0;
+    this->previousValue = 0.0;
+    this->previousQValue = 0.0;
 
     // Set up the hrr engine and critic network
     this->vectorSize = 128;
@@ -116,11 +114,9 @@ WorkingMemory::WorkingMemory( double learningRate,
     this->workingMemoryChunks.resize(numberOfChunks);
 
     // Set values for previous state
-    // previousValue and previousQValue must equal the bias term or else the 
-    // first TD adjustment will be much greater than the rest 
     this->previousReward = 0.0;
-    this->previousValue = bias;
-    this->previousQValue = bias;
+    this->previousValue = 0.0;
+    this->previousQValue = 0.0;
 
     // Set up the hrr engine and critic network
     this->vectorSize = vectorSize;
@@ -280,8 +276,8 @@ void WorkingMemory::initializeEpisode() {
     *  Clear Previous Values
     */
     this->previousReward = 0.0;
-    this->previousValue = bias;
-    this->previousQValue = bias;
+    this->previousValue = 0.0;
+    this->previousQValue = 0.0;
 }
 
 // Take a step in the episode.
@@ -295,7 +291,7 @@ void WorkingMemory::initializeEpisode() {
 
 // The value returned is the recommended best action for the state based on the Q function
 // We are assuming that this action will always be taken; otherwise the learning will not work
-string WorkingMemory::step(string state, vector<string> possibleActions, double reward) {
+string WorkingMemory::step(string state, string possibleActions, double reward) {
 
     /**
     *  Choose Working Memory Contents
@@ -305,7 +301,118 @@ string WorkingMemory::step(string state, vector<string> possibleActions, double 
     this->state = state;
 
     // Build the list of candidate chunks
-    vector<string> candidateChunks = getCandidateChunksFromState();
+    vector<string> candidateChunks = getCandidateChunks(this->state);
+
+    // Add current working memory contents to the list of candidates, as long as they are not already there
+    for ( string chunk : workingMemoryChunks ) {
+      if ( chunk != "I" && find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
+	candidateChunks.push_back(chunk);
+      }
+    }
+    sort(candidateChunks.begin(),candidateChunks.end());
+
+    // Find the most valuable chunks and store in working memory,
+    // or random under the Epsilon Soft policy
+    uniform_real_distribution<double> distribution(0.0, 1.0);
+    if ( distribution(re) < critic.epsilon ) {
+        chooseRandomWorkingMemoryContents(candidateChunks);
+    } else {
+        findMostValuableChunks(candidateChunks);
+    }
+
+    /**
+    *  Calculate WM Value
+    */
+
+    // Get the representation of the state and current working memory contents
+    // Find its value
+    HRR representation = stateAndWorkingMemoryRepresentation();
+    double value = critic.V(representation, weights, bias);
+
+    /**
+    *  Choose Action
+    */
+
+    // Use Q function to pick the best action for the new state/WM combo
+    // Convolve action with current state and working memory contents
+    pair<string,HRR> action = findMostValuableAction(possibleActions);
+
+    /**
+    *  Calculate Action Value
+    */
+
+    // TODO: This value is calculated in the findMostValuableAction method, so this is redundant
+    double qValue = critic.V(action.second, actionWeights, bias);
+
+    /**
+    *  Perform TD learning function for WM
+    */
+
+    // Find the TDError between the current state and the previous state
+    double error = critic.TDError(previousReward, value, previousValue);
+
+    // Update the weight vector
+    for ( int x = 0; x < vectorSize; x++ ) {
+        weights[x] += critic.alpha * error * eligibilityTrace[x];
+    }
+
+    /**
+    *  Perform TD learning function for Action
+    */
+
+    // Find the TDError between the current state and the previous state
+    error = critic.TDError(previousReward, qValue, previousQValue);
+
+    // Update the weight vector
+    for ( int x = 0; x < vectorSize; x++ ) {
+        actionWeights[x] += critic.alpha * error * actionEligibilityTrace[x];
+    }
+
+    /**
+    *  Update WM eligibility trace
+    */
+
+    for (int x = 0; x < vectorSize; x++) {
+        eligibilityTrace[x] *= critic.lambda;
+        eligibilityTrace[x] += representation[x];
+        eligibilityTrace[x] /= sqrt(2);
+    }
+
+    /**
+    *  Update Action eligibility trace
+    */
+
+    for (int x = 0; x < vectorSize; x++) {
+        actionEligibilityTrace[x] *= critic.lambda;
+        actionEligibilityTrace[x] += action.second[x];
+        actionEligibilityTrace[x] /= sqrt(2);
+    }
+
+    /**
+    *  Store t-1 State Information
+    */
+
+    // Store the value and reward for use in the next step
+    previousValue = value;
+    previousReward = reward;
+    previousQValue = qValue;
+
+    return action.first;
+}
+
+// This overload takes a string that provides only the relevant candidates
+// for working memory, rather than using all possible from state
+string WorkingMemory::step(string state, string workingMemoryCandidates, string possibleActions, double reward)  {
+
+    /**
+    *  Choose Working Memory Contents
+    */
+
+    // Update the current state
+    this->state = state;
+
+    // Build the list of candidate chunks
+    vector<string> candidateChunks = getCandidateChunks(workingMemoryCandidates);
 
     // Add current working memory contents to the list of candidates, as long as they are not already there
     for ( string chunk : workingMemoryChunks ) {
@@ -477,7 +584,7 @@ void WorkingMemory::resetWeights(double lower, double upper) {
  *----------------------------------------------------------------------------*/
 
  // Unpack the state into a vector of possible candidates for working memory
-vector<string> WorkingMemory::getCandidateChunksFromState() {
+vector<string> WorkingMemory::getCandidateChunks(string state) {
 
     vector<string> candidateChunks;
 
@@ -689,7 +796,8 @@ double WorkingMemory::findValueOfContents(vector<string> contents) {
 
 // This takes a list of possible actions and a given convolutino of state/WM contents
 // and picks the most valuable action to perform
-pair<string,HRR> WorkingMemory::findMostValuableAction(vector<string> possibleActions) {
+pair<string,HRR> WorkingMemory::findMostValuableAction(string actions) {
+    vector<string> possibleActions = HRREngine::explode(actions,'+');
     string action;
     HRR actionHRR;
     double bestValue = -999;
