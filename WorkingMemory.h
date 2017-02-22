@@ -149,14 +149,14 @@ class WorkingMemory {
     vector<string> getCandidateChunks(string state);
 
     // Collects a random selection of candidateChunks to put in working memory
-    void chooseRandomWorkingMemoryContents(vector<string> candidates);
+    void chooseRandomWorkingMemoryContents(vector<string> &candidates);
 
     // Compare all possible combinations of candidate chunks to find the most
     // valuable set of working memory contents
-    void findMostValuableChunks(vector<string> candidateChunks);
+    void findMostValuableChunks(vector<string> &candidateChunks);
 
     // Find all combinations of candidate chunks recursively
-    void findCombinationsOfCandidates(int offset, int slots, vector<string>& candidates, vector<string>& combination);
+    void findCombinationsOfCandidates(int offset, int slots, vector<string> &candidates, vector<string> &combination);
 
     // Find the HRR representing the state
     HRR stateRepresentation();
@@ -169,13 +169,14 @@ class WorkingMemory {
 
     // MJ: added this so that we can find the value of the next possible states and pick the best one
     // Calculate the value of a given state using the current working memory contents
-    double findValueOfStateWM(vector<string> state);
+    double findValueOfStateWM(vector<string> &state);
 
     // Calculate the value of a given state
-    double findValueOfState(vector<string> state);
+    double findValueOfState(vector<string> &state);
 
     // Calculate the value of a given set of working memory contents and current state
-    double findValueOfContents(vector<string> contents);
+    double findValueOfContents(vector<string> &contents);
+    double findValueOfContents(vector<string> &contents,HRR *stateRepresentation);
 
     // This takes a list of possible actions and a given convolutino of state/WM contents
     // and picks the most valuable action to perform
@@ -183,13 +184,13 @@ class WorkingMemory {
 
     // MJ: currently only used for debugging
     // Calculate the value of a given set of working memory contents and a given state
-    double findValueOfStateContents(vector<string> state, vector<string> contents);
+    double findValueOfStateContents(vector<string> &state, vector<string> &contents);
 
     // MJ: currently only used for debugging
     // Calculate the value of a given set of working memory contents, a given state, and a given action
-    double findValueOfStateContentsAction(vector<string> state, vector<string> contents, string action);
+    double findValueOfStateContentsAction(vector<string> &state, vector<string> &contents, string action);
 
-    // MJ - I'm removing it until there's time to clean it up
+    // MJ - I'm removing this until there's time to clean it up
     /*
     // Set the previous reward and value. Only accessible by WMTK
     void setPreviousStateWorkingMemory(HRR previousStateWM);

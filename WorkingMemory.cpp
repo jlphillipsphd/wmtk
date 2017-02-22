@@ -578,12 +578,12 @@ void WorkingMemory::resetWeights(double lower, double upper) {
 // Unpack the state into a vector of possible candidates for working memory
 // TODO: MJ - we may have to limit the number of component representations that
 // can be stored in a candidate chunk; right now it's 2^n where n is number of components
+// NOTE: RIGHT NOW WE ASSUME NO CONVOLUTION (*) IN THE STATE
 vector<string> WorkingMemory::getCandidateChunks(string state) {
 
     vector<string> candidateChunks;
 
-    // First, we separate the concepts represented in the state by splitting on
-    //  the '+' character
+    // First, we separate the concepts represented in the state by splitting on the '+' character
     vector<string> stateConceptNames = HRREngine::explode(state, '+');
 
     // Now we check if there is an empty string in the list, and remove it
@@ -594,13 +594,8 @@ vector<string> WorkingMemory::getCandidateChunks(string state) {
     vector<string>::iterator iter;
     for (string concept : stateConceptNames) {
 
-         // MJ: will this fix the issue of convolved HRRs not being candidates?
-         //candidateChunks.push_back(concept);
-
          vector<string> candidates = candidateChunks;
-
          vector<string> unpackedConcepts = hrrengine.unpackSimple(concept);
-
          candidateChunks.resize( candidates.size() + unpackedConcepts.size());
 
          // Finds the union of the current candidate chunks with the newly
@@ -620,7 +615,7 @@ vector<string> WorkingMemory::getCandidateChunks(string state) {
 }
 
  // Collects a random selection of candidateChunks to put in working memory
-void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> candidates) {
+void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> &candidates) {
 
   for (int i = 0; i < workingMemoryChunks.size(); i++) {
     if (candidates.size() == 0) {
@@ -644,8 +639,9 @@ void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> candidates)
 }
 
 // Compare all possible combinations of candidate chunks
-void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
+void WorkingMemory::findMostValuableChunks(vector<string> &candidateChunks) {
 
+  HRR stateRep = stateRepresentation();
   int n = candidateChunks.size();
   int r = workingMemoryChunks.size();
   if (r > n)
@@ -656,7 +652,7 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
   fill(combination.begin(),combination.end(),"I");
 
   workingMemoryChunks = combination;
-  currentChunkValue = findValueOfContents(combination);
+  currentChunkValue = findValueOfContents(combination,&stateRep);
 
   // Allow up to x items (# of WM slots) to be stored in working memory
   for (int x = 1; x <= r; x++) {
@@ -675,7 +671,7 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
 	}
       }
 
-      double valueOfContents = findValueOfContents(combination);
+      double valueOfContents = findValueOfContents(combination,&stateRep);
 
       if ( valueOfContents > currentChunkValue ) {
 	workingMemoryChunks = combination;
@@ -688,7 +684,7 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
   return;
 }
 
-void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<string>& candidates, vector<string>& combination) {
+void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<string> &candidates, vector<string> &combination) {
 
     if (slots == 0) {
         double valueOfContents = findValueOfContents(combination);
@@ -710,6 +706,7 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
 }
 
 // Find the HRR representing the state
+// TODO: MJ - this won't work if there's convolution in the state
 HRR WorkingMemory::stateRepresentation() {
 
     vector<string> stateConceptNames = HRREngine::explode(state, '+');
@@ -747,7 +744,7 @@ double WorkingMemory::findValueOfState() {
 }
 
 // Calculate the value of a given state
-double WorkingMemory::findValueOfState(vector<string> state) {
+double WorkingMemory::findValueOfState(vector<string> &state) {
 
     // State values are simply added
     HRR state_representation = hrrengine.query(state[0]);
@@ -758,34 +755,12 @@ double WorkingMemory::findValueOfState(vector<string> state) {
     return critic.V(state_representation, weights, bias);
 }
 
-// MJ: added this so that we can find the value of the next possible states and pick the best one
-// Calculate the value of a given state using the current working memory contents
-double WorkingMemory::findValueOfStateWM(vector<string> state) {
-    
-    // Get the convolved product of each chunk in working memory
-    HRR representation = hrrengine.query(workingMemoryChunks[0]);
-    for ( int i = 1; i < workingMemoryChunks.size(); i++ ) {
-        representation = hrrengine.convolveHRRs(representation, hrrengine.query(workingMemoryChunks[i]));
-    }
-
-    // Permute the working memory representation
-    if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
-      representation = permute(representation);
-
-    // State values are simply added
-    HRR state_representation = hrrengine.query(state[0]);
-    for ( int i = 1; i < state.size(); i++) {
-        state_representation = state_representation + hrrengine.query(state[i]);
-    }
-
-    // Convolve the representation of the WM contents with the state representation
-    representation = hrrengine.convolveHRRs(representation,state_representation);
-
-    return critic.V(representation, weights, bias);
-}
-
 // Calculate the value of a given set of working memory contents and state
-double WorkingMemory::findValueOfContents(vector<string> contents) {
+double WorkingMemory::findValueOfContents(vector<string> &contents) {
+    HRR stateRep = stateRepresentation();
+    findValueOfContents( contents, &stateRep );
+}
+double WorkingMemory::findValueOfContents(vector<string> &contents,HRR *stateRepresentation) {
 
     // Get the convolved product of each chunk in working memory
     HRR representation = hrrengine.query(contents[0]);
@@ -798,7 +773,7 @@ double WorkingMemory::findValueOfContents(vector<string> contents) {
         representation = permute(representation);
 
     // Convolve the representation of the WM contents with the state representation
-    representation = hrrengine.convolveHRRs(representation,stateRepresentation());
+    representation = hrrengine.convolveHRRs(representation,*stateRepresentation);
 
     // Calculate the value of the representation of the current state and contents
     return critic.V(representation, weights, bias);
@@ -831,7 +806,7 @@ pair<string,HRR> WorkingMemory::findMostValuableAction(string actions) {
 
 // MJ: currently only used for debugging
 // Calculate the value of a given set of working memory contents and state
-double WorkingMemory::findValueOfStateContents(vector<string> state, vector<string> contents) {
+double WorkingMemory::findValueOfStateContents(vector<string> &state, vector<string> &contents) {
 
     // Get the convolved product of each chunk in working memory
     HRR contents_representation = hrrengine.query(contents[0]);
@@ -858,7 +833,7 @@ double WorkingMemory::findValueOfStateContents(vector<string> state, vector<stri
 
 // MJ: currently only used for debugging
 // Calculate the value of a given set of working memory contents, a given state, and a given action
-double WorkingMemory::findValueOfStateContentsAction(vector<string> state, vector<string> contents, string action) {
+double WorkingMemory::findValueOfStateContentsAction(vector<string> &state, vector<string> &contents, string action) {
 
     // Get the convolved product of each chunk in working memory
     HRR representation = hrrengine.query(contents[0]);
@@ -885,6 +860,7 @@ double WorkingMemory::findValueOfStateContentsAction(vector<string> state, vecto
     // Calculate the value of the representation of the current state and contents
     return critic.V(representation, actionWeights, bias);
 }
+
 
 // Perform a permutation on an HRR
 HRR WorkingMemory::permute(HRR original) {
