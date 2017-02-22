@@ -61,6 +61,9 @@ WorkingMemory::WorkingMemory() : re(1) {
 
     // Set number of working memory slots
     this->workingMemoryChunks.resize(3);
+    for (int i=0; i < workingMemoryChunks.size(); ++i ) {
+        workingMemoryChunks[i] = "I";
+    }
 
     // Set values for previous state
     this->previousReward = 0.0;
@@ -112,6 +115,9 @@ WorkingMemory::WorkingMemory( double learningRate,
 
     // Set number of working memory slots
     this->workingMemoryChunks.resize(numberOfChunks);
+    for (int i=0; i < workingMemoryChunks.size(); ++i ) {
+        workingMemoryChunks[i] = "I";
+    }
 
     // Set values for previous state
     this->previousReward = 0.0;
@@ -302,13 +308,6 @@ string WorkingMemory::step(string state, string possibleActions, double reward) 
 
     // Build the list of candidate chunks
     vector<string> candidateChunks = getCandidateChunks(this->state);
-
-    // Add current working memory contents to the list of candidates, as long as they are not already there
-    for ( string chunk : workingMemoryChunks ) {
-      if ( chunk != "I" && find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
-	candidateChunks.push_back(chunk);
-      }
-    }
     sort(candidateChunks.begin(),candidateChunks.end());
 
     // Find the most valuable chunks and store in working memory,
@@ -413,13 +412,6 @@ string WorkingMemory::step(string state, string workingMemoryCandidates, string 
 
     // Build the list of candidate chunks
     vector<string> candidateChunks = getCandidateChunks(workingMemoryCandidates);
-
-    // Add current working memory contents to the list of candidates, as long as they are not already there
-    for ( string chunk : workingMemoryChunks ) {
-      if ( chunk != "I" && find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
-	candidateChunks.push_back(chunk);
-      }
-    }
     sort(candidateChunks.begin(),candidateChunks.end());
 
     // Find the most valuable chunks and store in working memory,
@@ -583,7 +575,9 @@ void WorkingMemory::resetWeights(double lower, double upper) {
  *  HELPER METHODS
  *----------------------------------------------------------------------------*/
 
- // Unpack the state into a vector of possible candidates for working memory
+// Unpack the state into a vector of possible candidates for working memory
+// TODO: MJ - we may have to limit the number of component representations that
+// can be stored in a candidate chunk; right now it's 2^n where n is number of components
 vector<string> WorkingMemory::getCandidateChunks(string state) {
 
     vector<string> candidateChunks;
@@ -599,6 +593,10 @@ vector<string> WorkingMemory::getCandidateChunks(string state) {
     //  the list of candidate chunks
     vector<string>::iterator iter;
     for (string concept : stateConceptNames) {
+
+         // MJ: will this fix the issue of convolved HRRs not being candidates?
+         //candidateChunks.push_back(concept);
+
          vector<string> candidates = candidateChunks;
 
          vector<string> unpackedConcepts = hrrengine.unpackSimple(concept);
@@ -610,6 +608,12 @@ vector<string> WorkingMemory::getCandidateChunks(string state) {
          iter = set_union( candidates.begin(), candidates.end(),
                     unpackedConcepts.begin(), unpackedConcepts.end(),
                     candidateChunks.begin() );
+    }
+
+    for ( string chunk : workingMemoryChunks ) {
+      if ( chunk != "I" && find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
+	candidateChunks.push_back(chunk);
+      }
     }
 
     return candidateChunks;
@@ -639,7 +643,7 @@ void WorkingMemory::chooseRandomWorkingMemoryContents(vector<string> candidates)
   }
 }
 
-// Compare all possible combinations of candidate chunks with the
+// Compare all possible combinations of candidate chunks
 void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
 
   int n = candidateChunks.size();
@@ -647,20 +651,26 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
   if (r > n)
     r = n;
 
+  // Initialize working memory contents to all Is
   vector<string> combination(workingMemoryChunks.size());
   fill(combination.begin(),combination.end(),"I");
 
   workingMemoryChunks = combination;
   currentChunkValue = findValueOfContents(combination);
 
+  // Allow up to x items (# of WM slots) to be stored in working memory
   for (int x = 1; x <= r; x++) {
-    vector<bool> v(n);
-    fill(v.begin(), v.begin() + x, true);
+
+    // Open x slots (mark as true) in the candidate mask
+    // This mask will be permuted to show all combinations
+    vector<bool> cmask(n);
+    fill(cmask.begin(), cmask.begin() + x, true);
 
     do {
       int fill = 0;
       for (int i = 0; i < n; ++i) {
-	if (v[i]) {
+	if (cmask[i]) {
+          // If an entry in the candidate mask is true the use that candidate
 	  combination[fill++] = candidateChunks[i];
 	}
       }
@@ -672,7 +682,7 @@ void WorkingMemory::findMostValuableChunks(vector<string> candidateChunks) {
 	currentChunkValue = valueOfContents;
       }
 
-    } while (prev_permutation(v.begin(), v.end()));
+    } while (prev_permutation(cmask.begin(), cmask.end()));
   }
 
   return;

@@ -166,6 +166,21 @@ string HRREngine::combineConcepts(string concept1, string concept2){
 	return name;
 }
 
+// Forms a complex concept by adding two hrrs
+HRR HRREngine::addHRRs(HRR hrr1, HRR hrr2) {
+
+    HRR sum(hrr1.size());
+    if (hrr1.size() != hrr2.size()){
+        cerr << "ERROR: Cannot perform dot operation on two vectors of differing size\n";
+        return sum;
+    }
+
+    for (int i = 0; i < hrr1.size(); i++) {
+        sum[i] = hrr1[i] + hrr2[i];
+    }
+    return sum;
+}
+
 // Forms a complex concept by performing circular convolution on two hrrs
 HRR HRREngine::convolveHRRs(HRR hrr1, HRR hrr2) {
 	HRR newConcept(hrr1.size());
@@ -565,7 +580,7 @@ float HRREngine::dot(HRR hrr1, HRR hrr2){
 	return dotProduct;
 }
 
-// Explode a string using '*' as a delimiter
+// Explode a string using a delimiter
 vector<string> HRREngine::explode(string str, char delimiter){
 	vector<string> stringVector = vector<string>();
 

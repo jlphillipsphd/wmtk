@@ -19,6 +19,9 @@ string results_file = "test_results/trace";
 string action_results_file = "test_results/actionResults";
 string trace_file = "test_results/trace";
 
+long correct_trials = 0;
+long erroneous_moves = 0;
+
 void printTrace( vector<int> trace_pos, vector<string> trace_wm, vector<string> trace_a )
 {
     string results_file = "test_results/trace";
@@ -76,15 +79,15 @@ void printValues( WorkingMemory &wm, int episode, vector<string> &metas, int num
 int main(int argc, char *argv[])
 {
     // debug
-    if(remove(trace_file.c_str()) != 0)
-        ;
+    //if(remove(trace_file.c_str()) != 0)
+    //    ;
 
     int seed = atoi(argv[1]);
 
     // The number of positions in the 1d world
     int num_states = 20;
     // The number of trials
-    int num_episodes = 50000;
+    int num_episodes = 1000;
     // The steps alloted to reach goal within an episode
     int num_steps = 100;
 
@@ -112,21 +115,13 @@ int main(int argc, char *argv[])
     goal.push_back(num_states/2);
 
     // Define WM parameters
-/*
     int hrr_size = 1024;
     double learn_rate = .05;
     double gamma = .9;
     double lambda = .5;
-    double epsilon = .001;
-*/
+    double epsilon = .01;
 
-    int hrr_size = 1024;
-    double learn_rate = .1;
-    double gamma = .9;
-    double lambda = .3;
-    double epsilon = .03;
-
-    vector<string> moves{"r","l"};
+    string moves = "r+l";
 
     WorkingMemory wm( learn_rate, gamma, lambda, epsilon, hrr_size, 1, 1, seed );
 
@@ -136,10 +131,28 @@ int main(int argc, char *argv[])
         int position = start_dist(re);
         string a;
 
+        int required_steps = 0;
+        if(signal==0)
+        {
+            if(position < 10)
+                required_steps=position;
+            else
+                required_steps=19-position;
+        }
+        else
+        {
+            if(position <= 10)
+                required_steps=10-position;
+            else
+                required_steps=position-10;
+        }
+
         // debug 
+/*
         vector<int> trace_val;
         vector<string> trace_wm;
         vector<string> trace_a;
+*/
 
         wm.initializeEpisode();
 
@@ -148,21 +161,28 @@ int main(int argc, char *argv[])
             // Step into the next position
             if( timestep == 1 )
                 // This will possibly put the signal into WM, but possibly not
-                a = wm.step( to_string(position) + "*" + metas[signal], moves, default_reward );
+                //a = wm.step( to_string(position) + "*" + metas[signal], moves, default_reward );
+                a = wm.step( to_string(position) + "*" + metas[signal], metas[signal], moves, default_reward );
             else
-                a = wm.step( to_string(position), moves, default_reward );
+                //a = wm.step( to_string(position), moves, default_reward );
+                a = wm.step( to_string(position), "I", moves, default_reward );
                 
             // debug
+/*
             trace_val.push_back(position);
             trace_wm.push_back(wm.workingMemoryChunks[0]);
             trace_a.push_back(a);
-
+*/
             // Absorb the reward if this is the goal
             if( position == goal[signal] )
             {
-                // debug
-                printTrace(trace_val,trace_wm,trace_a);
+                if( episode > num_episodes-100 )
+		    erroneous_moves += (timestep-1-required_steps);
 
+                // debug
+                //printTrace(trace_val,trace_wm,trace_a);
+
+                correct_trials++;
                 wm.absorbReward( goal_reward );
                 break;
             }
@@ -196,4 +216,5 @@ int main(int argc, char *argv[])
             cout << endl;
         }
     }
+    cout << correct_trials << "\t" << erroneous_moves << endl;
 }

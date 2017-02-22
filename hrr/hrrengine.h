@@ -155,6 +155,8 @@ public:
     // Method lists the names of all known concepts.
     void listAllConceptNames();
 
+    // Forms a complex concept by adding two hrrs
+    HRR addHRRs(HRR hrr1, HRR hrr2);
 
     // Forms a complex concept by performing circular convolution on two hrrs
     HRR convolveHRRs(HRR hrr1, HRR hrr2);
