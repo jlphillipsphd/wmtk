@@ -18,7 +18,7 @@ WCST::WCST
         bool encode_dimensions,
         int dimensions_per_trial,
         int features_per_trial,
-        int trials_to_completion
+        int trials_per_task
     ) : 
         re(random_seed), 
         task_mode(task_mode), 
@@ -27,7 +27,7 @@ WCST::WCST
         features_per_trial(features_per_trial), 
         dimension_picker(0,dimensions_per_trial-1), 
         feature_picker(0,features_per_trial-1),
-        trials_to_completion(trials_to_completion)
+        trials_per_task(trials_per_task)
 {
     // Set appropriate task
     if( task_mode == 'D' )
@@ -154,7 +154,7 @@ bool WCST::answer(string response)
         successive_correct_trials = 0;
 
     // Switch tasks if needed
-    if( successive_correct_trials == trials_to_completion )
+    if( successive_correct_trials == trials_per_task )
     {
         total_tasks_completed++;
         successive_correct_trials = 0;

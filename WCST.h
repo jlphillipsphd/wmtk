@@ -34,7 +34,7 @@ public:
     bool dimension_task = false;
     int task_d = 0; // index of task dimension
     int task_f = 0; // index of task feature
-    int trials_to_completion = -1;
+    int trials_per_task = -1;
 
     std::vector<std::string> dimensions;
     std::vector<std::vector<std::string> > features;
@@ -56,7 +56,7 @@ public:
         bool encode_dimensions,
         int dimensions_per_trial,
         int features_per_trial,
-        int trials_to_completion // -1 to never switch tasks
+        int trials_per_task // -1 to never switch tasks
     );
 
     // Make a trial based on the current task

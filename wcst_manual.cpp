@@ -7,13 +7,22 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    if(argc != 3)
+    // Sample run: ./wcst 1 "stimuli.dat" A 0 3 3 2
+    if(argc != 8)
     {
         cerr << "Invalid arguments" << endl;
         return 1;
     }
 
-    WCST wcst(atoi(argv[1]),argv[2],'A',false,3,3,2);
+    int random_seed = atoi(argv[1]);
+    string stim_file = argv[2];
+    char task_mode = argv[3][0];
+    bool encode_dims = argv[4][0]=='1';
+    int dims_per_trial = atoi(argv[5]);
+    int feats_per_trial = atoi(argv[6]);
+    int trials_per_task = atoi(argv[7]);
+
+    WCST wcst(random_seed,stim_file,task_mode,encode_dims,dims_per_trial,feats_per_trial,trials_per_task);
 
     // Manual Test
     string a;
