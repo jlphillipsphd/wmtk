@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     double epsilon = .01;
 
     WorkingMemory wm( learn_rate, gamma, lambda, epsilon, hrr_size, 1, 1, seed );
-    vector<string> candidateChunks = wm.getCandidateChunks("A+B+C");
+    vector<string> candidateChunks = wm.getCandidateChunks("color+blue+shape+circle+color+red+shape+square");
     for(string chunk : candidateChunks)
         cout << chunk << endl;
 }

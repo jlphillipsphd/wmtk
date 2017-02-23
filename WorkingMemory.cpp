@@ -582,7 +582,7 @@ void WorkingMemory::resetWeights(double lower, double upper) {
 vector<string> WorkingMemory::getCandidateChunks(string state) {
 
     vector<string> candidateChunks;
-
+/*
     // First, we separate the concepts represented in the state by splitting on the '+' character
     vector<string> stateConceptNames = HRREngine::explode(state, '+');
 
@@ -591,11 +591,12 @@ vector<string> WorkingMemory::getCandidateChunks(string state) {
 
     // Add the combinations of constituent concepts for each state concept to
     //  the list of candidate chunks
+
     vector<string>::iterator iter;
     for (string concept : stateConceptNames) {
 
          vector<string> candidates = candidateChunks;
-         vector<string> unpackedConcepts = hrrengine.unpackSimple(concept);
+         vector<string> unpackedConcepts = hrrengine.unpackSimple(concept); // All this did was explode on *
          candidateChunks.resize( candidates.size() + unpackedConcepts.size());
 
          // Finds the union of the current candidate chunks with the newly
@@ -604,7 +605,47 @@ vector<string> WorkingMemory::getCandidateChunks(string state) {
                     unpackedConcepts.begin(), unpackedConcepts.end(),
                     candidateChunks.begin() );
     }
+*/
+    // Get the distinct list of stateConceptNames
+    vector<string> stateConceptNamesDistinct;
+    for (string concept : HRREngine::explode(state, '+')) {
+        if (concept != "I" && find( stateConceptNamesDistinct.begin(), stateConceptNamesDistinct.end(), 
+          concept ) == stateConceptNamesDistinct.end() ) {
+            stateConceptNamesDistinct.push_back( concept );
+        }
+    }
 
+    // Find all possible combinations of the distinct list
+    // TODO: MJ - we may have to limit the number of component representations
+    // To do this we would change the upper bound for x in the for loop below
+    //int cap = 1;
+    int cap = stateConceptNamesDistinct.size();
+    for (int x = 1; x <= cap; x++) {
+
+        // Open x slots (mark as true) in the candidate mask
+        // This mask will be permuted to show all combinations
+        vector<bool> cmask(stateConceptNamesDistinct.size());
+        fill(cmask.begin(), cmask.begin() + x, true);
+
+        do {
+            vector<string> items;
+            for (int i = 0; i < stateConceptNamesDistinct.size(); ++i) {
+                if (cmask[i]) {
+                    // If an entry in the candidate mask is true the use that candidate
+                    items.push_back(stateConceptNamesDistinct[i]);
+                }
+            }
+
+            string items_rep;
+            for (string item : items)
+                items_rep += item + "+";
+
+            candidateChunks.push_back(items_rep.substr(0,items_rep.length()-1));
+
+        } while (prev_permutation(cmask.begin(), cmask.end()));
+    }
+
+    // Add in the current working memory representations
     for ( string chunk : workingMemoryChunks ) {
       if ( chunk != "I" && find( candidateChunks.begin(), candidateChunks.end(), chunk ) == candidateChunks.end() ) {
 	candidateChunks.push_back(chunk);
@@ -706,7 +747,7 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
 }
 
 // Find the HRR representing the state
-// TODO: MJ - this won't work if there's convolution in the state
+// TODO: MJ - this isn't taking into account any convolution in the state
 HRR WorkingMemory::stateRepresentation() {
 
     vector<string> stateConceptNames = HRREngine::explode(state, '+');
@@ -762,10 +803,11 @@ double WorkingMemory::findValueOfContents(vector<string> &contents) {
 }
 double WorkingMemory::findValueOfContents(vector<string> &contents,HRR *stateRepresentation) {
 
+    // Each working memory chunk can have a disjunctive representation, so we add the contents of each slot
     // Get the convolved product of each chunk in working memory
-    HRR representation = hrrengine.query(contents[0]);
+    HRR representation = hrrengine.addHRRs(hrrengine.explode(contents[0],'+'));
     for ( int i = 1; i < contents.size(); i++ ) {
-        representation = hrrengine.convolveHRRs(representation, hrrengine.query(contents[i]));
+        representation = hrrengine.convolveHRRs(representation, hrrengine.addHRRs(hrrengine.explode(contents[i],'+')));
     }
 
     // Permute the internal representation of working memory contents

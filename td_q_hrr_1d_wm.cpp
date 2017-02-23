@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
     // The number of positions in the 1d world
     int num_states = 20;
     // The number of trials
-    int num_episodes = 1000;
+    int num_episodes = 10000;
     // The steps alloted to reach goal within an episode
     int num_steps = 100;
 
@@ -210,7 +210,8 @@ int main(int argc, char *argv[])
             // Step into the next position
             if( timestep == 1 )
                 // This will possibly put the signal into WM, but possibly not
-                a = wm.step( to_string(position) + "*" + metas[signal], moves, default_reward );
+                a = wm.step( to_string(position) + "+" + metas[signal], moves, default_reward );
+                //a = wm.step( to_string(position) + "*" + metas[signal], moves, default_reward );
                 //a = wm.step( to_string(position) + "*" + metas[signal], metas[signal], moves, default_reward );
             else
                 a = wm.step( to_string(position), moves, default_reward );
@@ -260,11 +261,11 @@ int main(int argc, char *argv[])
         if( episode % 100 == 0 )
         {
             // debug
-            printValues( wm, episode, metas, num_states );
+            //printValues( wm, episode, metas, num_states );
             //printActionValues( wm, episode, metas, num_states );
 
-            wm.printWMContents();
-            cout << endl;
+            //wm.printWMContents();
+            //cout << endl;
         }
     }
     cout << correct_trials << "\t" << erroneous_moves << endl;

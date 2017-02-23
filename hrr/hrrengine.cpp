@@ -166,17 +166,28 @@ string HRREngine::combineConcepts(string concept1, string concept2){
 	return name;
 }
 
-// Forms a complex concept by adding two hrrs
-HRR HRREngine::addHRRs(HRR hrr1, HRR hrr2) {
+// Forms a complex concept by adding hrrs
+HRR HRREngine::addHRRs(vector<string> str_hrrs) {
+    vector<HRR> hrrs;
+    for (string s : str_hrrs)
+        hrrs.push_back(query(s));
+    return addHRRs(hrrs);
+}
+HRR HRREngine::addHRRs(vector<HRR> hrrs) {
+    if( hrrs.size() < 1 )
+        cerr << "ERROR: no HRR provided\n";
 
-    HRR sum(hrr1.size());
-    if (hrr1.size() != hrr2.size()){
-        cerr << "ERROR: Cannot perform dot operation on two vectors of differing size\n";
-        return sum;
+    HRR sum(hrrs[0]);
+    for (int i=1; i < hrrs.size(); ++i ) {
+        if (hrrs[i].size() != sum.size()){
+            cerr << "ERROR: Cannot perform add operation on two vectors of differing size\n";
+        }
+        for (int j = 0; j < sum.size(); j++) {
+            sum[j] += hrrs[i][j];
+        }
     }
-
-    for (int i = 0; i < hrr1.size(); i++) {
-        sum[i] = hrr1[i] + hrr2[i];
+    for (int j = 0; j < sum.size(); j++) {
+        sum[j] /= sqrt(hrrs.size());
     }
     return sum;
 }
@@ -392,121 +403,6 @@ string HRREngine::query(HRR hrr){
 	}
 	return match;
 }
-
-vector<string> HRREngine::unpack( string complexConcept ){
-	vector<string> conceptList;
-
-	unpackRecursive( reorderNameLex(complexConcept), conceptList );
-	sort( conceptList.begin(), conceptList.end() );
-
-	return conceptList;
-}
-
-void HRREngine::unpackRecursive( string complexConcept, vector<string>& conceptList ){
-
-	complexConcept = reorderNameLex(complexConcept);
-
-	// Get the list of base concepts in the complexConcept
-	vector<string> concepts = explode( complexConcept, '*' );
-
-	// Base case: if there is only one concept, return the representation for that concept
-	if ( concepts.size() == 1 ) {
-
-        // Check to see if the concept is in the concept list.
-		bool inList = false;
-		for ( string conc : conceptList ) {
-			if ( conc == concepts[0] ) inList = true;
-        }
-
-        // If concept is not in the list, then add it to the list
-		if ( !inList ) {
-            conceptList.push_back( concepts[0] );
-        }
-
-		bool inMemory = false;
-		for ( pair<string, HRR> concept : conceptMemory ){
-			if ( concept.first == concepts[0] ) inMemory = false;
-		}
-
-		if ( !inMemory ) {
-			conceptMemory.insert( pair<string, HRR>( concepts[0], encodeConcept(concepts[0]) ) );
-		}
-	}
-	// If there is more than one concept, iterate over the concepts, and construct a
-        //  representation for each list of OTHER concepts
-	else {
-
-		// Iterate over each concept, constructing a list if it doesn't exist for each
-        //  combination of OTHER concepts
-		for ( int i = 0; i < concepts.size(); i++ ) {
-
-            // Create a new vector list that contains all the original concepts
-			vector<string> otherVec = concepts;
-
-            // Remove the current concept from the list, creating a list of other concepts
-			string currentConcept = *(otherVec.begin() + i);
-			otherVec.erase( otherVec.begin() + i );
-
-            // Construct a name for the representation of other concepts
-			string otherConcepts = "";
-			for ( string concept : otherVec ){
-				otherConcepts += ( concept == otherVec.back() ? concept : concept + "*" );
-			}
-
-            // Call the unpack function recursively on the list of other concepts
-			unpackRecursive( otherConcepts, conceptList );
-
-            // Check to see if the original complex concept is in the list
-			bool inList = false;
-			for ( string conc : conceptList ) {
-				if ( conc == complexConcept ) inList = true;
-            }
-
-            // If the original complex concept is not in the list, then add it to the list
-			if (!inList) {
-                conceptList.push_back( complexConcept );
-            }
-
-			bool inMemory = false;
-			for ( pair<string, HRR> concept : conceptMemory ){
-				if ( concept.first == complexConcept ) inMemory = true;
-			}
-
-			if ( !inMemory ) {
-				conceptMemory.insert( pair<string, HRR>( complexConcept, convolveHRRs( query(currentConcept), query(otherConcepts) ) ) );
-			}
-		}
-	}
-}
-
-
-vector<HRR> HRREngine::unpack(HRR complexConcept){
-
-	vector<HRR> conceptList;
-	vector<string> conceptNamesList = unpack( query(complexConcept) );
-
-	for (string s : conceptNamesList){
-		conceptList.push_back(findHRRByName(s));
-	}
-
-	return conceptList;
-}
-
-vector<string> HRREngine::unpackSimple(string complexConcept) {
-	return explode(complexConcept, '*');
-}
-
-vector<HRR> HRREngine::unpackSimple(HRR complexConcept) {
-	vector<HRR> conceptList;
-	vector<string> conceptNamesList = explode(query(complexConcept), '*');
-
-	for (auto s : conceptNamesList) {
-		conceptList.push_back(findHRRByName(s));
-	}
-
-	return conceptList;
-}
-
 
 // Find hrr by name
 HRR HRREngine::findHRRByName(string name){

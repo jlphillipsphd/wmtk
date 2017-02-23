@@ -114,7 +114,6 @@ public:
     // Method constructs a concept and all of its constituent concepts using a tree-like recursive algorithm
     HRR constructConcept(vector<string> concepts);
 
-
     /**
      *  Method query() is a critical method for the engine
      *		query() is overloaded to perform two functions, depending on its usage:
@@ -127,26 +126,11 @@ public:
     HRR query(string name);
     string query(HRR hrr);
 
-    /**
-     *	Method unpack() is a critical method for the engine
-     *		unpack() is overloaded to perform two functions, depending on its usage:
-     *			- Takes a string value as an arguemnt, gets a list of all combinations of all constituent concept
-     *			  names of a complex concept.
-     *			- Takes an HRR as an argument, gets a list of all combinations of all constituent HRR concepts in
-     *			  a complex concept.
-     */
-    vector<string> unpack(string);
-    void unpackRecursive(string, vector<string>&);
-
-    vector<HRR> unpack(HRR);
-    void unpackRecursive(HRR, vector<HRR>&);
-
-    vector<string> unpackSimple(string);
-    vector<HRR> unpackSimple(HRR);
+    // Parses a string representation into an HRR using * and + symbols
+    //HRR parse(string rep);
 
     // Find hrr by name
     HRR findHRRByName(string name);
-
 
     // Method lists the map of all concepts.
     //	It is only recommended to use this method if you use a low vectorSize
@@ -156,7 +140,8 @@ public:
     void listAllConceptNames();
 
     // Forms a complex concept by adding two hrrs
-    HRR addHRRs(HRR hrr1, HRR hrr2);
+    HRR addHRRs(vector<string> str_hrrs);
+    HRR addHRRs(vector<HRR> hrrs);
 
     // Forms a complex concept by performing circular convolution on two hrrs
     HRR convolveHRRs(HRR hrr1, HRR hrr2);
