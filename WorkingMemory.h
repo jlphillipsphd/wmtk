@@ -116,11 +116,11 @@ class WorkingMemory {
     //  Takes the string representation of the current state and an optional
     //  value for the reward at that state (typically 0). Calculates a guess of
     //  what information is most valuable to retain from current state.
-    string step(string state, string possibleActions, double reward = 0.0);
+    string step(string state, vector<string> possibleActions, double reward = 0.0);
 
     // This overload takes a string that provides only the relevant candidates
     // for working memory, rather than using all possible from state
-    string step(string state, string workingMemoryCandidates, string possibleActions, double reward = 0.0);
+    string step(string state, string workingMemoryCandidates, vector<string> possibleActions, double reward = 0.0);
 
     // Get the final reward and finish the episode.
     void absorbReward(double reward = 1.0);
@@ -180,7 +180,7 @@ class WorkingMemory {
 
     // This takes a list of possible actions and a given convolutino of state/WM contents
     // and picks the most valuable action to perform
-    pair<string,HRR> findMostValuableAction(string possibleActions);
+    pair<string,HRR> findMostValuableAction(vector<string> possibleActions);
 
     // MJ: currently only used for debugging
     // Calculate the value of a given set of working memory contents and a given state

@@ -297,7 +297,7 @@ void WorkingMemory::initializeEpisode() {
 
 // The value returned is the recommended best action for the state based on the Q function
 // We are assuming that this action will always be taken; otherwise the learning will not work
-string WorkingMemory::step(string state, string possibleActions, double reward) {
+string WorkingMemory::step(string state, vector<string> possibleActions, double reward) {
 
     /**
     *  Choose Working Memory Contents
@@ -401,7 +401,7 @@ string WorkingMemory::step(string state, string possibleActions, double reward) 
 
 // This overload takes a string that provides only the relevant candidates
 // for working memory, rather than using all possible from state
-string WorkingMemory::step(string state, string workingMemoryCandidates, string possibleActions, double reward)  {
+string WorkingMemory::step(string state, string workingMemoryCandidates, vector<string> possibleActions, double reward)  {
 
     /**
     *  Choose Working Memory Contents
@@ -823,8 +823,7 @@ double WorkingMemory::findValueOfContents(vector<string> &contents,HRR *stateRep
 
 // This takes a list of possible actions and a given convolutino of state/WM contents
 // and picks the most valuable action to perform
-pair<string,HRR> WorkingMemory::findMostValuableAction(string actions) {
-    vector<string> possibleActions = HRREngine::explode(actions,'+');
+pair<string,HRR> WorkingMemory::findMostValuableAction(vector<string> possibleActions) {
     string action;
     HRR actionHRR;
     double bestValue = -999;

@@ -11,7 +11,7 @@
 #include <string>
 #include <math.h>
 #include "WorkingMemory.h"
-#include "hrr/hrrengine.h"
+//#include "hrr/hrrengine.h"
 
 using namespace std;
 
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
     double lambda = .5;
     double epsilon = .01;
 
-    string moves = "r+l";
+    vector<string> moves{"r","l"};
 
     WorkingMemory wm( learn_rate, gamma, lambda, epsilon, hrr_size, 1, 1, seed );
 
@@ -261,10 +261,10 @@ int main(int argc, char *argv[])
         if( episode % 100 == 0 )
         {
             // debug
-            //printValues( wm, episode, metas, num_states );
+            printValues( wm, episode, metas, num_states );
             //printActionValues( wm, episode, metas, num_states );
 
-            //wm.printWMContents();
+            wm.printWMContents();
             //cout << endl;
         }
     }
