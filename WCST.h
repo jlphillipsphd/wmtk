@@ -32,7 +32,6 @@ public:
     // so that it alternames between feature and dimension rules
     char task_mode = 'A';
     bool dimension_task = false;
-    bool task_switching = true;
     int task_d = 0; // index of task dimension
     int task_f = 0; // index of task feature
     int trials_to_completion = -1;
