@@ -73,7 +73,8 @@ class WorkingMemory {
     double bias;                                // Bias term for the critic neural network
 
     std::mt19937 re;                            // Random number generator
-    vector<int> permutation;                    // The permutation vector used to permute HRRs
+    vector<int> permutation;                    // The permutation vector used to permute WM HRRs
+    vector<int> actionPermutation;              // The permutation vector used to permute action HRRs
 
   public:
 
@@ -200,10 +201,10 @@ class WorkingMemory {
     */
 
     // Perform a permutation on an HRR
-    HRR permute(HRR original);
+    HRR permute(HRR original,vector<int> perm);
 
     // Undo the permutation to find the original unshuffled HRR
-    HRR inversePermute(HRR permuted);
+    HRR inversePermute(HRR permuted,vector<int> perm);
 
     // MJ: Debug function
     void printWMContents();    

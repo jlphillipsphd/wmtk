@@ -15,7 +15,7 @@
 
 using namespace std;
 
-string results_file = "test_results/trace";
+string results_file = "test_results/results";
 string action_results_file = "test_results/actionResults";
 string attention_results_file = "test_results/attentionResults";
 string trace_file = "test_results/trace";

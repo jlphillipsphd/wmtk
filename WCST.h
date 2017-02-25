@@ -15,11 +15,12 @@ Wisconsin Card Sort Test.
 class WCST
 {
 public:
-    struct Trial
+    struct TrialStep
     {
         std::string state;
         std::vector<std::string> actions;
-        Trial(std::string s, std::vector<std::string> a);
+        TrialStep();
+        TrialStep(std::string s, std::vector<std::string> a);
         void print();
     };
 
@@ -32,8 +33,9 @@ public:
     // so that it alternames between feature and dimension rules
     char task_mode = 'A';
     bool dimension_task = false;
-    int task_d = 0; // index of task dimension
-    int task_f = 0; // index of task feature
+    std::vector<int> task_d; // index of task dimension for each step 
+    std::vector<int> task_f; // index of task feature for each step 
+    int steps_per_trial = 1;
     int trials_per_task = -1;
 
     std::vector<std::string> dimensions;
@@ -46,6 +48,7 @@ public:
     long total_trials_completed = 0;
     long total_correct_trials = 0;
     long successive_correct_trials = 0;
+    bool current_trial_correct = false;
 
     // Provide a file path to the stimuli file
     WCST
@@ -56,23 +59,24 @@ public:
         bool encode_dimensions,
         int dimensions_per_trial,
         int features_per_trial,
+        int steps_per_trial,
         int trials_per_task // -1 to never switch tasks
     );
 
     // Make a trial based on the current task
-    Trial getTrial();
+    TrialStep getTrialStep(int step = 0);
 
     // Print task details
-    void printTask();
+    void printTask(int step = 0);
 
     // Print general stats
     void printStats();
 
     // Change the current task
-    void setTask();
+    void setTasks();
 
     // Return whether the answer is correct; update tallies and switch tasks if needed
-    bool answer(std::string response);
+    bool answer(std::string response,int step = 0);
 };
 
 #endif

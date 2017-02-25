@@ -95,11 +95,13 @@ WorkingMemory::WorkingMemory() : re(1) {
     // Set the bias term; this will never change
     this->bias = 1.0;
 
-    // Set up the random permutation vector
+    // Set up the random permutation vectors
     for ( int i = 0; i < this->vectorSize; i++ ) {
         this->permutation.push_back(i);
+        this->actionPermutation.push_back(i);
     }
     shuffle(this->permutation.begin(), this->permutation.end(), this->re);
+    shuffle(this->actionPermutation.begin(), this->actionPermutation.end(), this->re);
 }
 
 // Initializing Constructor
@@ -149,12 +151,13 @@ WorkingMemory::WorkingMemory( double learningRate,
     // Set the bias term; this will never change
     this->bias = bias;
 
-    // Set up the random permutation vector
-    for ( int i = 0; i < vectorSize; i++ ) {
+    // Set up the random permutation vectors
+    for ( int i = 0; i < this->vectorSize; i++ ) {
         this->permutation.push_back(i);
+        this->actionPermutation.push_back(i);
     }
     shuffle(this->permutation.begin(), this->permutation.end(), this->re);
-    return;
+    shuffle(this->actionPermutation.begin(), this->actionPermutation.end(), this->re);
 }
 
 // Copy-Constructor
@@ -196,8 +199,10 @@ WorkingMemory::WorkingMemory(const WorkingMemory& rhs) {
     this->bias = rhs.bias;
 
     this->permutation.resize(rhs.vectorSize);
+    this->actionPermutation.resize(rhs.vectorSize);
     for ( int i = 0; i < rhs.vectorSize; i++ ) {
         this->permutation[i] = rhs.permutation[i];
+        this->actionPermutation[i] = rhs.actionPermutation[i];
     }
 }
 
@@ -243,8 +248,10 @@ WorkingMemory& WorkingMemory::operator=(const WorkingMemory& rhs) {
     this->bias = rhs.bias;
 
     this->permutation.resize(rhs.vectorSize);
+    this->actionPermutation.resize(rhs.vectorSize);
     for ( int i = 0; i < rhs.vectorSize; i++ ) {
         this->permutation[i] = rhs.permutation[i];
+        this->actionPermutation[i] = rhs.actionPermutation[i];
     }
 
     return *this;
@@ -748,6 +755,7 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
 
 // Find the HRR representing the state
 // TODO: MJ - this isn't taking into account any convolution in the state
+// TODO: Normalize 
 HRR WorkingMemory::stateRepresentation() {
 
     vector<string> stateConceptNames = HRREngine::explode(state, '+');
@@ -771,7 +779,7 @@ HRR WorkingMemory::stateAndWorkingMemoryRepresentation() {
 
     // Permute the representation of
     if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
-      representation = permute(representation);
+      representation = permute(representation,permutation);
 
     // Convolve the representation of the WM contents with the state representation
     representation = hrrengine.convolveHRRs(representation,stateRepresentation());
@@ -812,7 +820,7 @@ double WorkingMemory::findValueOfContents(vector<string> &contents,HRR *stateRep
 
     // Permute the internal representation of working memory contents
     if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
-        representation = permute(representation);
+        representation = permute(representation,permutation);
 
     // Convolve the representation of the WM contents with the state representation
     representation = hrrengine.convolveHRRs(representation,*stateRepresentation);
@@ -831,7 +839,12 @@ pair<string,HRR> WorkingMemory::findMostValuableAction(vector<string> possibleAc
 
     for ( int i = 0; i < possibleActions.size(); i++ ) {
 
-        HRR actionRepresentation = hrrengine.convolveHRRs(hrrengine.query(possibleActions[i]),stateWMRepresentation);
+        // Add together any disjunctive representations
+        // Permute the action representation
+        HRR actionRepresentation = hrrengine.addHRRs(hrrengine.explode(possibleActions[i],'+'));
+        actionRepresentation = permute(actionRepresentation,actionPermutation);
+        actionRepresentation = hrrengine.convolveHRRs(actionRepresentation,stateWMRepresentation);
+
         double val = critic.V(actionRepresentation, actionWeights, bias);
 
         if( val > bestValue )
@@ -849,42 +862,16 @@ pair<string,HRR> WorkingMemory::findMostValuableAction(vector<string> possibleAc
 // Calculate the value of a given set of working memory contents and state
 double WorkingMemory::findValueOfStateContents(vector<string> &state, vector<string> &contents) {
 
+    // Each working memory chunk can have a disjunctive representation, so we add the contents of each slot
     // Get the convolved product of each chunk in working memory
-    HRR contents_representation = hrrengine.query(contents[0]);
+    HRR representation = hrrengine.addHRRs(hrrengine.explode(contents[0],'+'));
     for ( int i = 1; i < contents.size(); i++ ) {
-        contents_representation = hrrengine.convolveHRRs(contents_representation, hrrengine.query(contents[i]));
-    }
-
-    // Permute the internal representation of working memory contents
-    if (hrrengine.dot(hrrengine.query("I"),contents_representation) != 1.0)
-        contents_representation = permute(contents_representation);
-
-    // State values are simply added
-    HRR state_representation = hrrengine.query(state[0]);
-    for ( int i = 1; i < state.size(); i++) {
-        state_representation = state_representation + hrrengine.query(state[i]);
-    }
-
-    // Convolve the representation of the WM contents with the state representation
-    contents_representation = hrrengine.convolveHRRs(contents_representation,state_representation);
-
-    // Calculate the value of the representation of the current state and contents
-    return critic.V(contents_representation, weights, bias);
-}
-
-// MJ: currently only used for debugging
-// Calculate the value of a given set of working memory contents, a given state, and a given action
-double WorkingMemory::findValueOfStateContentsAction(vector<string> &state, vector<string> &contents, string action) {
-
-    // Get the convolved product of each chunk in working memory
-    HRR representation = hrrengine.query(contents[0]);
-    for ( int i = 1; i < contents.size(); i++ ) {
-        representation = hrrengine.convolveHRRs(representation, hrrengine.query(contents[i]));
+        representation = hrrengine.convolveHRRs(representation, hrrengine.addHRRs(hrrengine.explode(contents[i],'+')));
     }
 
     // Permute the internal representation of working memory contents
     if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
-        representation = permute(representation);
+        representation = permute(representation,permutation);
 
     // State values are simply added
     HRR state_representation = hrrengine.query(state[0]);
@@ -895,8 +882,40 @@ double WorkingMemory::findValueOfStateContentsAction(vector<string> &state, vect
     // Convolve the representation of the WM contents with the state representation
     representation = hrrengine.convolveHRRs(representation,state_representation);
 
+    // Calculate the value of the representation of the current state and contents
+    return critic.V(representation, weights, bias);
+}
+
+// MJ: currently only used for debugging
+// Calculate the value of a given set of working memory contents, a given state, and a given action
+double WorkingMemory::findValueOfStateContentsAction(vector<string> &state, vector<string> &contents, string action) {
+
+    // Each working memory chunk can have a disjunctive representation, so we add the contents of each slot
+    // Get the convolved product of each chunk in working memory
+    HRR representation = hrrengine.addHRRs(hrrengine.explode(contents[0],'+'));
+    for ( int i = 1; i < contents.size(); i++ ) {
+        representation = hrrengine.convolveHRRs(representation, hrrengine.addHRRs(hrrengine.explode(contents[i],'+')));
+    }
+
+    // Permute the internal representation of working memory contents
+    if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
+        representation = permute(representation,permutation);
+
+    // State values are simply added
+    HRR state_representation = hrrengine.query(state[0]);
+    for ( int i = 1; i < state.size(); i++) {
+        state_representation = state_representation + hrrengine.query(state[i]);
+    }
+
+    // Convolve the representation of the WM contents with the state representation
+    representation = hrrengine.convolveHRRs(representation,state_representation);
+
+    // Add together any disjunctive representations
+    // Permute the action representation
     // Convolve the state/WM with the action
-    representation = hrrengine.convolveHRRs(hrrengine.query(action),representation);
+    HRR actionRepresentation = hrrengine.addHRRs(hrrengine.explode(action,'+'));
+    actionRepresentation = permute(actionRepresentation,actionPermutation);
+    representation = hrrengine.convolveHRRs(actionRepresentation,representation);
 
     // Calculate the value of the representation of the current state and contents
     return critic.V(representation, actionWeights, bias);
@@ -904,24 +923,24 @@ double WorkingMemory::findValueOfStateContentsAction(vector<string> &state, vect
 
 
 // Perform a permutation on an HRR
-HRR WorkingMemory::permute(HRR original) {
+HRR WorkingMemory::permute(HRR original,vector<int> perm) {
 
     HRR permutedHRR(vectorSize);
 
     for ( int i = 1; i < vectorSize; i++ ) {
-        permutedHRR[i] = original[ permutation[i] ];
+        permutedHRR[i] = original[ perm[i] ];
     }
 
     return permutedHRR;
 }
 
 // Undo the permutation to find the original unshuffled HRR
-HRR WorkingMemory::inversePermute(HRR permuted) {
+HRR WorkingMemory::inversePermute(HRR permuted,vector<int> perm) {
 
     HRR originalHRR(vectorSize);
 
     for ( int i = 1; i < vectorSize; i++ ) {
-        originalHRR[ permutation[i] ] = permuted[i];
+        originalHRR[ perm[i] ] = permuted[i];
     }
 
     return originalHRR;

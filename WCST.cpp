@@ -1,3 +1,9 @@
+/*
+Author: Mike Jovanovich
+Date: 2/1/2017
+Description: This library is meant to povide a common interface for several tasks related to the
+Wisconsin Card Sort Test.
+*/
 #include <iostream>
 #include <string>
 #include <vector>
@@ -8,7 +14,8 @@
 
 using namespace std;
 
-WCST::Trial::Trial(string s, vector<string> a) : state(s), actions(a) {}
+WCST::TrialStep::TrialStep(){}
+WCST::TrialStep::TrialStep(string s, vector<string> a) : state(s), actions(a) {}
 
 WCST::WCST
     ( 
@@ -18,6 +25,7 @@ WCST::WCST
         bool encode_dimensions,
         int dimensions_per_trial,
         int features_per_trial,
+        int steps_per_trial,
         int trials_per_task
     ) : 
         re(random_seed), 
@@ -27,7 +35,10 @@ WCST::WCST
         features_per_trial(features_per_trial), 
         dimension_picker(0,dimensions_per_trial-1), 
         feature_picker(0,features_per_trial-1),
-        trials_per_task(trials_per_task)
+        steps_per_trial(steps_per_trial),
+        trials_per_task(trials_per_task),
+        task_d(steps_per_trial),
+        task_f(steps_per_trial)
 {
     // Set appropriate task
     if( task_mode == 'D' )
@@ -50,11 +61,11 @@ WCST::WCST
     }
     stim_file.close();
 
-    setTask();
+    setTasks();
 }
 
 // Print trial details
-void WCST::Trial::print()
+void WCST::TrialStep::print()
 {
     cout << "State: " << state << endl;
     cout << "Actions: ";
@@ -64,7 +75,7 @@ void WCST::Trial::print()
 }
 
 // Make a trial based on the current task
-WCST::Trial WCST::getTrial()
+WCST::TrialStep WCST::getTrialStep(int step)
 {
     string state = "";
     vector<string> actions;
@@ -77,8 +88,8 @@ WCST::Trial WCST::getTrial()
             rep += dimensions[d] + "+";
 
         // If this task is feature specific, then we have to include that feature 
-        if( !dimension_task && d == task_d )
-            rep += features[d][task_f] + "+";
+        if( !dimension_task && d == task_d[step] )
+            rep += features[d][task_f[step]] + "+";
         else
             rep += features[d][feature_picker(re)] + "+";
 
@@ -86,15 +97,15 @@ WCST::Trial WCST::getTrial()
         actions.push_back(rep.substr(0,rep.length()-1));
     }
     
-    return Trial(state.substr(0,state.length()-1),actions);
+    return TrialStep(state.substr(0,state.length()-1),actions);
 }
 
 // Print task details
-void WCST::printTask()
+void WCST::printTask(int step)
 {
-    cout << "Current Task: " << dimensions[task_d] << " ";
+    cout << "Current Task: " << dimensions[task_d[step]] << " ";
     if( !dimension_task )
-        cout << features[task_d][task_f];
+        cout << features[task_d[step]][task_f[step]];
     cout << endl;
 }
 
@@ -107,59 +118,81 @@ void WCST::printStats()
 }
 
 // Change the current task
-void WCST::setTask()
+void WCST::setTasks()
 {
     // We only need to change this if we're doing all tasks
     if( task_mode == 'A' )
         dimension_task = !dimension_task;
 
-    // If we're in dimension only task mode then make sure we get a new dimension
-    int new_task_d = dimension_picker(re);
-    if( dimension_task )
+    for( int step = 0; step < steps_per_trial; step++ )
     {
-        while( new_task_d == task_d )
-            new_task_d = dimension_picker(re);
-    }
-    // If we're in feature only task mode then make sure we get a new feature
-    int new_task_f = feature_picker(re);
-    if( !dimension_task )
-    {
-        while( new_task_f == task_f )
-            new_task_f = feature_picker(re);
-    }
+        // If we're in dimension only task mode then make sure we get a new dimension
+        int new_task_d = dimension_picker(re);
+        if( dimension_task )
+        {
+            while( new_task_d == task_d[step] )
+                new_task_d = dimension_picker(re);
+        }
+        // If we're in feature only task mode then make sure we get a new feature
+        int new_task_f = feature_picker(re);
+        if( !dimension_task )
+        {
+            while( new_task_f == task_f[step] )
+                new_task_f = feature_picker(re);
+        }
 
-    task_d = new_task_d;
-    task_f = new_task_f;
+        task_d[step] = new_task_d;
+        task_f[step] = new_task_f;
+    }
 }
 
 // Return whether the answer is correct; update tallies and switch tasks if needed
-bool WCST::answer(string response)
+// There is a class variable, current_trial_correct, that keeps track of whether any
+// step in the current trial has failed
+bool WCST::answer(string response,int step)
 {
-    // Determine correctness - this is always based on feature since we can't assume
+    // Initialize current n-step trial
+    if( step == 0 )
+        current_trial_correct = true;
+
+    // Determine correctness of this step - this is always based on feature since we can't assume
     // that dimensions were encoded
     bool correct = false;
     if( dimension_task )
-        correct = (find(features[task_d].begin(), features[task_d].end(), response) != features[task_d].end());
-    else
-        correct = (response.find(features[task_d][task_f]) != string::npos);
-
-    // Update tallies
-    total_trials_completed++;
-    if( correct )
     {
-        total_correct_trials++;
-        successive_correct_trials++;
+        string token = response.substr(response.find('+') + 1);
+        correct = (find(features[task_d[step]].begin(), features[task_d[step]].end(), token) != 
+          features[task_d[step]].end());
     }
     else
-        successive_correct_trials = 0;
+        correct = (response.find(features[task_d[step]][task_f[step]]) != string::npos);
+
+    // Update trial results
+    if( !correct )
+        current_trial_correct = false;
+
+    // Update trial tallies
+    if( step + 1 == steps_per_trial )
+    {
+        total_trials_completed++;
+        if( current_trial_correct )
+        {
+            total_correct_trials++;
+            successive_correct_trials++;
+        }
+        else
+            successive_correct_trials = 0;
+    }
 
     // Switch tasks if needed
     if( successive_correct_trials == trials_per_task )
     {
         total_tasks_completed++;
         successive_correct_trials = 0;
-        setTask();
+        setTasks();
     }
     
-    return correct;
+    // Note that result is only valid on the nth step
+    // Otherwise it is an intermediate result
+    return current_trial_correct;
 }
