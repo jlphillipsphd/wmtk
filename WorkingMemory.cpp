@@ -588,32 +588,8 @@ void WorkingMemory::resetWeights(double lower, double upper) {
 // NOTE: RIGHT NOW WE ASSUME NO CONVOLUTION (*) IN THE STATE
 vector<string> WorkingMemory::getCandidateChunks(string state) {
 
-    vector<string> candidateChunks;
-/*
-    // First, we separate the concepts represented in the state by splitting on the '+' character
-    vector<string> stateConceptNames = HRREngine::explode(state, '+');
-
-    // Now we check if there is an empty string in the list, and remove it
-    stateConceptNames.erase( remove( stateConceptNames.begin(), stateConceptNames.end(), "I" ), stateConceptNames.end() );
-
-    // Add the combinations of constituent concepts for each state concept to
-    //  the list of candidate chunks
-
-    vector<string>::iterator iter;
-    for (string concept : stateConceptNames) {
-
-         vector<string> candidates = candidateChunks;
-         vector<string> unpackedConcepts = hrrengine.unpackSimple(concept); // All this did was explode on *
-         candidateChunks.resize( candidates.size() + unpackedConcepts.size());
-
-         // Finds the union of the current candidate chunks with the newly
-         //  unpacked concepts, and stores in the candidate chunks vector
-         iter = set_union( candidates.begin(), candidates.end(),
-                    unpackedConcepts.begin(), unpackedConcepts.end(),
-                    candidateChunks.begin() );
-    }
-*/
     // Get the distinct list of stateConceptNames
+    vector<string> candidateChunks;
     vector<string> stateConceptNamesDistinct;
     for (string concept : HRREngine::explode(state, '+')) {
         if (concept != "I" && find( stateConceptNamesDistinct.begin(), stateConceptNamesDistinct.end(), 
@@ -755,17 +731,8 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
 
 // Find the HRR representing the state
 // TODO: MJ - this isn't taking into account any convolution in the state
-// TODO: Normalize 
 HRR WorkingMemory::stateRepresentation() {
-
-    vector<string> stateConceptNames = HRREngine::explode(state, '+');
-    HRR stateRepresentation = hrrengine.query(stateConceptNames[0]);
-
-    for ( int i = 1; i < stateConceptNames.size(); i++) {
-        stateRepresentation = stateRepresentation + hrrengine.query(stateConceptNames[i]);
-    }
-
-    return stateRepresentation;
+    return hrrengine.addHRRs(hrrengine.explode(state,'+'));
 }
 
 // Get the representation of the current working memory contents with the current state
@@ -794,13 +761,7 @@ double WorkingMemory::findValueOfState() {
 
 // Calculate the value of a given state
 double WorkingMemory::findValueOfState(vector<string> &state) {
-
-    // State values are simply added
-    HRR state_representation = hrrengine.query(state[0]);
-    for ( int i = 1; i < state.size(); i++) {
-        state_representation = state_representation + hrrengine.query(state[i]);
-    }
-
+    HRR state_representation = hrrengine.addHRRs(state);
     return critic.V(state_representation, weights, bias);
 }
 
@@ -874,10 +835,7 @@ double WorkingMemory::findValueOfStateContents(vector<string> &state, vector<str
         representation = permute(representation,permutation);
 
     // State values are simply added
-    HRR state_representation = hrrengine.query(state[0]);
-    for ( int i = 1; i < state.size(); i++) {
-        state_representation = state_representation + hrrengine.query(state[i]);
-    }
+    HRR state_representation = hrrengine.addHRRs(state);
 
     // Convolve the representation of the WM contents with the state representation
     representation = hrrengine.convolveHRRs(representation,state_representation);
@@ -902,10 +860,7 @@ double WorkingMemory::findValueOfStateContentsAction(vector<string> &state, vect
         representation = permute(representation,permutation);
 
     // State values are simply added
-    HRR state_representation = hrrengine.query(state[0]);
-    for ( int i = 1; i < state.size(); i++) {
-        state_representation = state_representation + hrrengine.query(state[i]);
-    }
+    HRR state_representation = hrrengine.addHRRs(state);
 
     // Convolve the representation of the WM contents with the state representation
     representation = hrrengine.convolveHRRs(representation,state_representation);

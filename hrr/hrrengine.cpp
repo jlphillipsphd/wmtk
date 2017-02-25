@@ -186,9 +186,13 @@ HRR HRREngine::addHRRs(vector<HRR> hrrs) {
             sum[j] += hrrs[i][j];
         }
     }
+/*
+    // MJ: I've been getting better results without normalizing the sum vector
+    // so I'm leaving this out for now
     for (int j = 0; j < sum.size(); j++) {
         sum[j] /= sqrt(hrrs.size());
     }
+*/
     return sum;
 }
 
