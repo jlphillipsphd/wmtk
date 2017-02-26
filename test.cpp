@@ -23,21 +23,14 @@ int main(int argc, char *argv[])
     for(string chunk : candidateChunks)
         cout << chunk << endl;k
 */
-    //HRR asdf = wm.hrrengine.parse("(a+b)*(c)");
-    //HRR asdf = wm.hrrengine.parse("c*d+a*b");
     HRR a = wm.hrrengine.query("a");
     HRR b = wm.hrrengine.query("b");
-    HRR c = wm.hrrengine.query("c");
-    HRR d = wm.hrrengine.query("d");
-    HRR e = wm.hrrengine.query("e");
-
-    wm.hrrengine.printHRRHorizontal(
-        wm.hrrengine.addHRRs(vector<HRR>{
-            wm.hrrengine.convolveHRRs(a,b),
-            wm.hrrengine.convolveHRRs(wm.hrrengine.convolveHRRs(c,d),e)
-        })
-    );
+    wm.hrrengine.printHRRHorizontal(wm.hrrengine.query("a+b"));
     cout << endl;
-    wm.hrrengine.printHRRHorizontal(wm.hrrengine.parse("a*b+c*d*e"));
+    wm.hrrengine.printHRRHorizontal(wm.hrrengine.addHRRs(vector<HRR>{a,b}));
+    cout << endl;
+    wm.hrrengine.printHRRHorizontal(wm.hrrengine.query("a*b"));
+    cout << endl;
+    wm.hrrengine.printHRRHorizontal(wm.hrrengine.convolveHRRs(a,b));
     cout << endl;
 }

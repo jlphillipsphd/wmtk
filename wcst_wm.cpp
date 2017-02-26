@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    // Sample run: ./wcst_wm 1 "stimuli.dat" D 0 3 3 1 8
+    // Sample run: ./wcst_wm 1 "stimuli.dat" F 0 3 3 1 8
     if(argc != 9)
     {
         cerr << "Invalid arguments" << endl;

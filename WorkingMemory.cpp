@@ -731,11 +731,9 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
 }
 
 // Find the HRR representing the state
-// TODO: MJ - this isn't taking into account any convolution in the state
-// TODO: There's no way around it - we need a fully functioning parse method
-// that can handle addition, convolution, and parentheses
 HRR WorkingMemory::stateRepresentation() {
     return hrrengine.addHRRs(hrrengine.explode(state,'+'));
+    //return hrrengine.parse(state);
 }
 
 // Get the representation of the current working memory contents with the current state

@@ -123,57 +123,6 @@ void HRREngine::printHRRHorizontal(HRR hrr){
 	cout << setprecision(3) << setw(6) << fixed << hrr[hrr.size() - 1] << setw(3) << " ]";
 }
 
-// Combines two concepts to form a complex concept
-string HRREngine::combineConcepts(string concept1, string concept2){
-
-	// Create the new name for the object (lexicographical order)
-	//	Break the name of the first concept into its constituent parts, and store in descriptors
-	//	Then, add each of the constituent parts of the second concept's name into descriptors
-	vector<string> descriptors = explode(concept1, '*');
-	for (string str : explode(concept2, '*') ){
-		descriptors.push_back(str);
-	}
-
-	// Sort the descriptors
-	sort(descriptors.begin(), descriptors.end());
-
-	// Build the new name for the concept
-	string name = "";
-	for (int i = 0; i < descriptors.size(); i++) {
-		name += descriptors[i];
-		if (i != descriptors.size() -1){
-			name += "*";
-		}
-	}
-
-	bool exists = false;
-	for ( pair<string, HRR> concept : conceptMemory ) {
-		if ( name == concept.first ) exists = true;
-	}
-
-	if (!exists){
-		// Get the HRRs for each concept
-		HRR hrr1 = query(concept1);
-		HRR hrr2 = query(concept2);
-
-		// Compute the convolution of the concept
-		HRR newHrr = convolveHRRs(hrr1, hrr2);
-
-		// Enter the new concept into concept memory
-		conceptMemory.insert(pair<string, HRR>(name, newHrr));
-	}
-
-	return name;
-}
-
-// A simple parser that can handle + and * operators (cannot handle parentheses)
-HRR HRREngine::parse(string input) {
-    vector<HRR> hrrs;
-    for( string c : explode(input,'+') )
-        hrrs.push_back( convolveHRRs( explode( c, '*') ) );
-    return addHRRs( hrrs );
-}
-
 // Forms a complex concept by adding hrrs
 HRR HRREngine::addHRRs(vector<string> str_hrrs) {
     vector<HRR> hrrs;
@@ -194,13 +143,26 @@ HRR HRREngine::addHRRs(vector<HRR> hrrs) {
             sum[j] += hrrs[i][j];
         }
     }
-/*
+    /*
     // MJ: I've been getting better results without normalizing the sum vector
     // so I'm leaving this out for now
     for (int j = 0; j < sum.size(); j++) {
         sum[j] /= sqrt(hrrs.size());
     }
-*/
+    */
+    return sum;
+}
+HRR HRREngine::addHRRs(HRR hrr1,HRR hrr2) {
+    HRR sum(hrr1);
+    if (hrr2.size() != sum.size()){
+        cerr << "ERROR: Cannot perform add operation on two vectors of differing size\n";
+    }
+    for (int j = 0; j < sum.size(); j++) {
+        sum[j] += hrr2[j];
+        // MJ: I've been getting better results without normalizing the sum vector
+        // so I'm leaving this out for now
+        //sum[j] /= sqrt(2);
+    }
     return sum;
 }
 
@@ -291,88 +253,34 @@ HRR HRREngine::correlateHRRs(HRR complexHRR, HRR hrr) {
 
 // Get user-defined values for an hrr
 HRR HRREngine::getUserDefinedHRR(vector<double> values){
-
     HRR hrr = {};
-
     // Get values for an HRR for each value
     for (double val : values){
             hrr.push_back(val);
     }
-
     return hrr;
 }
 
-// Method takes a concept name as a string and generates an HRR for it, storing them in concept memory and returning the HRR
-HRR HRREngine::encodeConcept(string name){
+// Used to create simple or complex concepts
+// All constituent concepts will be added to memory, as well as the string that was passed in
+HRR HRREngine::constructConcept(string concept)
+{
+    HRR constructedHRR = zero();
+    vector<string> disjunct_concepts = explode( concept, '+' );
+    for( string d : disjunct_concepts )
+    {
+        vector<string> conjunct_concepts = explode( d, '*' );
+        for( string c : conjunct_concepts )
+            if( !hrrInMemory( c ) )
+                conceptMemory.insert( pair<string, HRR>( c, generateHRR() ));
 
-    for (pair<string, HRR> concept : conceptMemory)
-            if ( concept.first == name ) return concept.second;
-
-    // Generate a new HRR for the concept
-    HRR newHRR = generateHRR();
-
-    // Add this concept and a new representation for it into the engine
-    conceptMemory.insert( pair<string, HRR>( name, newHRR ));
-
-    return newHRR;
-}
-
-// Method takes a vector of strings and stores each as an HRR in conceptMemory, if it does not already exist
-void HRREngine::encodeConcepts(vector<string> concepts){
-    for (string concept : concepts){
-            conceptMemory.insert(pair<string, HRR>(concept, generateHRR()));
+        constructedHRR = addHRRs( constructedHRR, convolveHRRs( conjunct_concepts ) );
     }
-}
 
-void HRREngine::construct(string conceptName){
-    vector<string> concepts = explode(conceptName, '*');
-    sort(concepts.begin(), concepts.end());
+    if( !hrrInMemory( concept ) )
+        conceptMemory.insert(pair<string, HRR>(concept, constructedHRR));
 
-    constructConcept(concepts);
-}
-
-// Method constructs a concept and all of its constituent concepts using a tree-like recursive algorithm
-HRR HRREngine::constructConcept(vector<string> concepts){
-
-    // Base case: if there is only one concept, return the representation for that concept
-    if (concepts.size() == 1){
-            // If a representation exists, return it
-            return encodeConcept(concepts[0]);
-    }
-    // Otherwise, iterate over the concepts, and construct a representation for each list of OTHER concepts
-    else {
-
-            HRR constructedHRR;
-
-            // Iterate over each concept, constructing a list if it doesn't exist for each combination of OTHER concepts
-            for (int i = 0; i < concepts.size(); i++) {
-
-                    vector<string> otherVec = concepts;
-                    otherVec.erase(otherVec.begin() + i);
-
-                    string otherConcepts = "";
-                    for (int i = 0; i < otherVec.size(); i++){
-                            otherConcepts += ( i < otherVec.size() - 1 ? otherVec[i] + "*" : otherVec[i] );
-                    }
-
-                    string conceptsName = "";
-                    for (string concept : concepts)
-                            conceptsName += ( concept == concepts.back() ? concept : concept + "*" );
-
-                    if ( findHRRByName(otherConcepts).empty() ){
-
-                            constructedHRR = constructConcept(otherVec);
-
-                            conceptMemory.insert(pair<string, HRR>(otherConcepts, constructedHRR));
-                    }
-
-                    constructedHRR = convolveHRRs(encodeConcept(concepts[i]), findHRRByName(otherConcepts));
-
-                    if (findHRRByName(conceptsName).empty()) conceptMemory.insert(pair<string, HRR>(conceptsName, constructedHRR));
-            }
-
-            return constructedHRR;
-    }
+    return constructedHRR;
 }
 
 // Sets the general length of the vector
@@ -396,12 +304,12 @@ void HRREngine::setVectorSize(int size){
  *			- takes an HRR as an argument, checks to see if a representation exists for that value, and if
  *			  a representation exists, then returns the name of the concept that matches that representation
  */
+// For performance and consistency, "query" should always be used as the interface to retrieve 
+// an HRR representation
 HRR HRREngine::query(string name){
 
     // Reorder the string
     name = reorderNameLex(name);
-
-    vector<string> strings = explode(name, '*');
 
     // See if a value exists for this concept in the map
     //	For each concept in concept memory, check if the key matches the name of the concept we are looking for
@@ -420,11 +328,7 @@ HRR HRREngine::query(string name){
      *	Use construct function to build the concept and all of its constituent pieces
      */
 
-    HRR newHRR = constructConcept(strings);
-
-    conceptMemory.insert(pair<string, HRR>(name, newHRR));
-
-    return newHRR;
+    return constructConcept(name);
 }
 
 string HRREngine::query(HRR hrr){
@@ -452,16 +356,13 @@ string HRREngine::query(HRR hrr){
 	return match;
 }
 
-// Find hrr by name
-HRR HRREngine::findHRRByName(string name){
-	for (pair<string, HRR> concept: conceptMemory) {
-		if (concept.first == name) return concept.second;
-    }
-
-    // MJ: having an empty result is a valid case, so don't print an error here
-    //cout << "No HRR found for concept: " << name << "\n";
-	vector<double> newVector;
-	return newVector;
+// Tells whether an HRR has been created or not
+bool HRREngine::hrrInMemory(string name)
+{
+    for (pair<string, HRR> concept: conceptMemory)
+        if (concept.first == name)
+            return true;
+    return false;
 }
 
 // Method lists the map of all concepts. Use only for debugging with small vectors.
@@ -560,6 +461,11 @@ HRR HRREngine::identity() {
     identity[0] = 1.0;
 
     return identity;
+}
+
+// Construct an identity vector of given length
+HRR HRREngine::zero() {
+    return vector<double>(vectorSize, 0.0);
 }
 
 void HRREngine::multiplycomplex(double* half1, double* half2, double* result) {
