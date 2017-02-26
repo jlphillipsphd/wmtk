@@ -64,6 +64,7 @@ WorkingMemory::WorkingMemory() : re(1) {
     for (int i=0; i < workingMemoryChunks.size(); ++i ) {
         workingMemoryChunks[i] = "I";
     }
+    this->maxConceptsPerChunk = -1;
 
     // Set values for previous state
     this->previousReward = 0.0;
@@ -113,13 +114,16 @@ WorkingMemory::WorkingMemory( double learningRate,
                               int vectorSize,
                               double bias,
                               int numberOfChunks,
-                              int seed) : re(seed), hrrengine(seed) {
+                              int seed,
+                              int maxConceptsPerChunk) 
+                              : re(seed), hrrengine(seed) {
 
     // Set number of working memory slots
     this->workingMemoryChunks.resize(numberOfChunks);
     for (int i=0; i < workingMemoryChunks.size(); ++i ) {
         workingMemoryChunks[i] = "I";
     }
+    this->maxConceptsPerChunk = maxConceptsPerChunk;
 
     // Set values for previous state
     this->previousReward = 0.0;
@@ -170,6 +174,7 @@ WorkingMemory::WorkingMemory(const WorkingMemory& rhs) {
     for ( string chunk : rhs.workingMemoryChunks ) {
         this->workingMemoryChunks.push_back(chunk);
     }
+    this->maxConceptsPerChunk = rhs.maxConceptsPerChunk;
 
     this->vectorSize = rhs.vectorSize;
 
@@ -219,6 +224,7 @@ WorkingMemory& WorkingMemory::operator=(const WorkingMemory& rhs) {
     for ( string chunk : rhs.workingMemoryChunks ) {
         this->workingMemoryChunks.push_back(chunk);
     }
+    this->maxConceptsPerChunk = rhs.maxConceptsPerChunk;
 
     this->vectorSize = rhs.vectorSize;
 
@@ -583,8 +589,6 @@ void WorkingMemory::resetWeights(double lower, double upper) {
  *----------------------------------------------------------------------------*/
 
 // Unpack the state into a vector of possible candidates for working memory
-// TODO: MJ - we may have to limit the number of component representations that
-// can be stored in a candidate chunk; right now it's 2^n where n is number of components
 // NOTE: RIGHT NOW WE ASSUME NO CONVOLUTION (*) IN THE STATE
 vector<string> WorkingMemory::getCandidateChunks(string state) {
 
@@ -599,10 +603,7 @@ vector<string> WorkingMemory::getCandidateChunks(string state) {
     }
 
     // Find all possible combinations of the distinct list
-    // TODO: MJ - we may have to limit the number of component representations
-    // To do this we would change the upper bound for x in the for loop below
-    //int cap = 1;
-    int cap = stateConceptNamesDistinct.size();
+    int cap = (maxConceptsPerChunk == -1 ) ? stateConceptNamesDistinct.size() : maxConceptsPerChunk;
     for (int x = 1; x <= cap; x++) {
 
         // Open x slots (mark as true) in the candidate mask
@@ -731,6 +732,8 @@ void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<s
 
 // Find the HRR representing the state
 // TODO: MJ - this isn't taking into account any convolution in the state
+// TODO: There's no way around it - we need a fully functioning parse method
+// that can handle addition, convolution, and parentheses
 HRR WorkingMemory::stateRepresentation() {
     return hrrengine.addHRRs(hrrengine.explode(state,'+'));
 }

@@ -58,6 +58,7 @@ class WorkingMemory {
     HRREngine hrrengine;                        // The HRR Engine handles the representation of information used in working memory
     CriticNetwork critic;                       // The critic determines what states are valuable and thus what chunks are retained in morking memory
     vector<string> workingMemoryChunks;         // The chunks of information currently held in working memory
+    int maxConceptsPerChunk;                            // This is the max number of disjunct concepts that can be stored in a working memory slot
     string state;                               // The current state
     double currentChunkValue;                   // The current value of the chunks and the state
 
@@ -94,7 +95,8 @@ class WorkingMemory {
                   int vectorSize,
                   double bias,
                   int numberOfChunks,
-                  int seed = 1);
+                  int seed = 1,
+                  int maxConceptsPerChunk = -1);
 
     // Copy-Constructor
     WorkingMemory(const WorkingMemory&);
