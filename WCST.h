@@ -41,6 +41,7 @@ public:
     std::vector<std::string> dimensions;
     std::vector<std::vector<std::string> > features;
     bool encode_dimensions = false;
+    bool use_conjunctive = false;  // currently not exposed
 
     int dimensions_per_trial; // This will limit to the first n dimensions
     int features_per_trial; // This will limit to the first n features

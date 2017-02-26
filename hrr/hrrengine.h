@@ -139,11 +139,16 @@ public:
     // Method lists the names of all known concepts.
     void listAllConceptNames();
 
+    // A simple parser that can handle + and * operators (cannot handle parentheses)
+    HRR parse(string input);
+
     // Forms a complex concept by adding two hrrs
     HRR addHRRs(vector<string> str_hrrs);
     HRR addHRRs(vector<HRR> hrrs);
 
     // Forms a complex concept by performing circular convolution on two hrrs
+    HRR convolveHRRs(vector<string> str_hrrs);
+    HRR convolveHRRs(vector<HRR> hrrs);
     HRR convolveHRRs(HRR hrr1, HRR hrr2);
 
     // Perform a circular correlation (involution) operation

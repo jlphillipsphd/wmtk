@@ -47,11 +47,11 @@ int main(int argc, char *argv[])
 
     // Whenever trials_per_task number of tasks are completed successively
     // total_tasks_completed will increment, and a new task will begin
-    int cur_task = 0;
-    int task_steps = 0;
+    //int cur_task = 0;
+    //int task_steps = 0;
     string a;
     WCST::TrialStep t;
-    while( wcst.total_tasks_completed < 1000 )
+    while( wcst.total_tasks_completed < 100 )
     {
         // Each trial in the WCST is an episode for the WMTK
         wm.initializeEpisode();
@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
         {
             t = wcst.getTrialStep( step );
             //a = wm.step( t.state, t.actions, 0.0 );
+            //a = wm.step( t.state + "*_ts_" + to_string(step), t.actions, 0.0 );
             a = wm.step( t.state + "+_ts_" + to_string(step), t.actions, 0.0 );
             wcst.answer( a, step );
         }
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
         // For the last step in the trial, absorb reward
         t = wcst.getTrialStep( steps_per_trial-1 );
         //a = wm.step( t.state, t.actions, 0.0 );
+        //a = wm.step( t.state + "*_ts_" + to_string(steps_per_trial-1), t.actions, 0.0 );
         a = wm.step( t.state + "+_ts_" + to_string(steps_per_trial-1), t.actions, 0.0 );
         if( wcst.answer( a, steps_per_trial-1 ) )
             wm.absorbReward(1.0);
@@ -82,6 +84,7 @@ int main(int argc, char *argv[])
             wm.printWMContents();
         }
 */
+/*
         task_steps++;
         if( wcst.total_tasks_completed != cur_task )
         {
@@ -89,6 +92,7 @@ int main(int argc, char *argv[])
             cur_task = wcst.total_tasks_completed;
             task_steps = 0;
         }
+*/
     }
 
     wcst.printStats();

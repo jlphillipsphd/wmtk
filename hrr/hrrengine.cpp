@@ -166,6 +166,14 @@ string HRREngine::combineConcepts(string concept1, string concept2){
 	return name;
 }
 
+// A simple parser that can handle + and * operators (cannot handle parentheses)
+HRR HRREngine::parse(string input) {
+    vector<HRR> hrrs;
+    for( string c : explode(input,'+') )
+        hrrs.push_back( convolveHRRs( explode( c, '*') ) );
+    return addHRRs( hrrs );
+}
+
 // Forms a complex concept by adding hrrs
 HRR HRREngine::addHRRs(vector<string> str_hrrs) {
     vector<HRR> hrrs;
@@ -197,149 +205,185 @@ HRR HRREngine::addHRRs(vector<HRR> hrrs) {
 }
 
 // Forms a complex concept by performing circular convolution on two hrrs
+HRR HRREngine::convolveHRRs(vector<string> str_hrrs) {
+    vector<HRR> hrrs;
+    for (string s : str_hrrs)
+        hrrs.push_back(query(s));
+    return convolveHRRs(hrrs);
+}
+HRR HRREngine::convolveHRRs(vector<HRR> hrrs) {
+    
+    if( hrrs.size() == 0 )
+    {
+        cerr << "No HRRs passed to convolveHRRs." << endl;
+        return HRR();
+    }
+    // optimization shortcut
+    else if( hrrs.size() == 1 )
+        return hrrs[0];
+
+    HRR newConcept(hrrs[0]);
+    gsl_fft_real_transform(&(newConcept[0]), 1, this->vectorSize, real, work);
+    for( int i = 1; i < hrrs.size(); i++ )
+    {
+        HRR prevConcept = newConcept;
+        if (hrrs[i].size() != newConcept.size()) 
+        {
+            // Notify user if attempted to convolve vectors of differing length
+            cout << "ERROR: Cannot convolve two hrrs of differing size!\n";
+        } 
+        else
+        {
+          gsl_fft_real_transform(&(hrrs[i][0]), 1, this->vectorSize, real, work);
+          multiplycomplex(&(hrrs[i][0]), &(prevConcept[0]), &(newConcept[0]));
+        }
+    }
+    gsl_fft_halfcomplex_inverse(&(newConcept[0]), 1, this->vectorSize, this->hc, this->work);
+
+    return newConcept;
+}
 HRR HRREngine::convolveHRRs(HRR hrr1, HRR hrr2) {
-	HRR newConcept(hrr1.size());
+    HRR newConcept(hrr1.size());
 
-	if (hrr1.size() != hrr2.size()) {
-		// Notify user if attempted to convolve vectors of differing length
-		cout << "ERROR: Cannot convolve two hrrs of differing size!\n";
-	} else {
+    if (hrr1.size() != hrr2.size()) {
+        // Notify user if attempted to convolve vectors of differing length
+        cout << "ERROR: Cannot convolve two hrrs of differing size!\n";
+    } 
+    else {
+      gsl_fft_real_transform(&(hrr1[0]), 1, this->vectorSize, real, work);
+      gsl_fft_real_transform(&(hrr2[0]), 1, this->vectorSize, real, work);
+      multiplycomplex(&(hrr1[0]), &(hrr2[0]), &(newConcept[0]));
+      gsl_fft_halfcomplex_inverse(&(newConcept[0]), 1, this->vectorSize, this->hc, this->work);
+    }
 
-	  gsl_fft_real_transform(&(hrr1[0]), 1, this->vectorSize, real, work);
-	  gsl_fft_real_transform(&(hrr2[0]), 1, this->vectorSize, real, work);
-	  multiplycomplex(&(hrr1[0]), &(hrr2[0]), &(newConcept[0]));
-	  gsl_fft_halfcomplex_inverse(&(newConcept[0]), 1, this->vectorSize, this->hc, this->work);
-
-	}
-
-	return newConcept;
+    return newConcept;
 }
 
 // Extract a base concept from a complex concept and the former's complementary base concept
 string HRREngine::extractConcept(string complexConcept, string baseConcept) {
-	string extractedConcept;
-	HRR extractedHrr;
+    string extractedConcept;
+    HRR extractedHrr;
 
-	HRR complexHrr = query(complexConcept);
-	HRR baseHrr = query(baseConcept);
+    HRR complexHrr = query(complexConcept);
+    HRR baseHrr = query(baseConcept);
 
-	extractedHrr = correlateHRRs(complexHrr, baseHrr);
+    extractedHrr = correlateHRRs(complexHrr, baseHrr);
 
-	extractedConcept = query(extractedHrr);
+    extractedConcept = query(extractedHrr);
 
-	return extractedConcept;
+    return extractedConcept;
 }
 
 // Perform a circular correlation (involution) operation
 HRR HRREngine::correlateHRRs(HRR complexHRR, HRR hrr) {
-	HRR newConcept(vectorSize);
-	HRR invertedVector(vectorSize);
+    HRR newConcept(vectorSize);
+    HRR invertedVector(vectorSize);
 
-	// Calculate the approximate inverse of the vector
-	invertedVector = invertVector(hrr);
+    // Calculate the approximate inverse of the vector
+    invertedVector = invertVector(hrr);
 
-	// Perform involution operation by convolving the complex HRR with the inverted HRR
-	newConcept = convolveHRRs(invertedVector, complexHRR);
+    // Perform involution operation by convolving the complex HRR with the inverted HRR
+    newConcept = convolveHRRs(invertedVector, complexHRR);
 
-	return newConcept;
+    return newConcept;
 }
 
 
 // Get user-defined values for an hrr
 HRR HRREngine::getUserDefinedHRR(vector<double> values){
 
-	HRR hrr = {};
+    HRR hrr = {};
 
-	// Get values for an HRR for each value
-	for (double val : values){
-		hrr.push_back(val);
-	}
+    // Get values for an HRR for each value
+    for (double val : values){
+            hrr.push_back(val);
+    }
 
-	return hrr;
+    return hrr;
 }
 
 // Method takes a concept name as a string and generates an HRR for it, storing them in concept memory and returning the HRR
 HRR HRREngine::encodeConcept(string name){
 
-	for (pair<string, HRR> concept : conceptMemory)
-		if ( concept.first == name ) return concept.second;
+    for (pair<string, HRR> concept : conceptMemory)
+            if ( concept.first == name ) return concept.second;
 
-	// Generate a new HRR for the concept
-	HRR newHRR = generateHRR();
+    // Generate a new HRR for the concept
+    HRR newHRR = generateHRR();
 
-	// Add this concept and a new representation for it into the engine
-	conceptMemory.insert( pair<string, HRR>( name, newHRR ));
+    // Add this concept and a new representation for it into the engine
+    conceptMemory.insert( pair<string, HRR>( name, newHRR ));
 
-	return newHRR;
+    return newHRR;
 }
 
 // Method takes a vector of strings and stores each as an HRR in conceptMemory, if it does not already exist
 void HRREngine::encodeConcepts(vector<string> concepts){
-	for (string concept : concepts){
-		conceptMemory.insert(pair<string, HRR>(concept, generateHRR()));
-	}
+    for (string concept : concepts){
+            conceptMemory.insert(pair<string, HRR>(concept, generateHRR()));
+    }
 }
 
 void HRREngine::construct(string conceptName){
-	vector<string> concepts = explode(conceptName, '*');
-	sort(concepts.begin(), concepts.end());
+    vector<string> concepts = explode(conceptName, '*');
+    sort(concepts.begin(), concepts.end());
 
-	constructConcept(concepts);
+    constructConcept(concepts);
 }
 
 // Method constructs a concept and all of its constituent concepts using a tree-like recursive algorithm
 HRR HRREngine::constructConcept(vector<string> concepts){
 
-	// Base case: if there is only one concept, return the representation for that concept
-	if (concepts.size() == 1){
-		// If a representation exists, return it
-		return encodeConcept(concepts[0]);
-	}
-	// Otherwise, iterate over the concepts, and construct a representation for each list of OTHER concepts
-	else {
+    // Base case: if there is only one concept, return the representation for that concept
+    if (concepts.size() == 1){
+            // If a representation exists, return it
+            return encodeConcept(concepts[0]);
+    }
+    // Otherwise, iterate over the concepts, and construct a representation for each list of OTHER concepts
+    else {
 
-		HRR constructedHRR;
+            HRR constructedHRR;
 
-		// Iterate over each concept, constructing a list if it doesn't exist for each combination of OTHER concepts
-		for (int i = 0; i < concepts.size(); i++) {
+            // Iterate over each concept, constructing a list if it doesn't exist for each combination of OTHER concepts
+            for (int i = 0; i < concepts.size(); i++) {
 
-			vector<string> otherVec = concepts;
-			otherVec.erase(otherVec.begin() + i);
+                    vector<string> otherVec = concepts;
+                    otherVec.erase(otherVec.begin() + i);
 
-			string otherConcepts = "";
-			for (int i = 0; i < otherVec.size(); i++){
-				otherConcepts += ( i < otherVec.size() - 1 ? otherVec[i] + "*" : otherVec[i] );
-			}
+                    string otherConcepts = "";
+                    for (int i = 0; i < otherVec.size(); i++){
+                            otherConcepts += ( i < otherVec.size() - 1 ? otherVec[i] + "*" : otherVec[i] );
+                    }
 
-			string conceptsName = "";
-			for (string concept : concepts)
-				conceptsName += ( concept == concepts.back() ? concept : concept + "*" );
+                    string conceptsName = "";
+                    for (string concept : concepts)
+                            conceptsName += ( concept == concepts.back() ? concept : concept + "*" );
 
-			if ( findHRRByName(otherConcepts).empty() ){
+                    if ( findHRRByName(otherConcepts).empty() ){
 
-				constructedHRR = constructConcept(otherVec);
+                            constructedHRR = constructConcept(otherVec);
 
-				conceptMemory.insert(pair<string, HRR>(otherConcepts, constructedHRR));
-			}
+                            conceptMemory.insert(pair<string, HRR>(otherConcepts, constructedHRR));
+                    }
 
-			constructedHRR = convolveHRRs(encodeConcept(concepts[i]), findHRRByName(otherConcepts));
+                    constructedHRR = convolveHRRs(encodeConcept(concepts[i]), findHRRByName(otherConcepts));
 
-			if (findHRRByName(conceptsName).empty()) conceptMemory.insert(pair<string, HRR>(conceptsName, constructedHRR));
-		}
+                    if (findHRRByName(conceptsName).empty()) conceptMemory.insert(pair<string, HRR>(conceptsName, constructedHRR));
+            }
 
-		return constructedHRR;
-	}
+            return constructedHRR;
+    }
 }
 
 // Sets the general length of the vector
 void HRREngine::setVectorSize(int size){
-	vectorSize = size;
-	gsl_fft_real_wavetable_free(this->real);
-	gsl_fft_halfcomplex_wavetable_free(this->hc);
-	gsl_fft_real_workspace_free(this->work);
-	this->real = gsl_fft_real_wavetable_alloc(this->vectorSize);
-	this->hc = gsl_fft_halfcomplex_wavetable_alloc(this->vectorSize);
-	this->work = gsl_fft_real_workspace_alloc(this->vectorSize);
+    vectorSize = size;
+    gsl_fft_real_wavetable_free(this->real);
+    gsl_fft_halfcomplex_wavetable_free(this->hc);
+    gsl_fft_real_workspace_free(this->work);
+    this->real = gsl_fft_real_wavetable_alloc(this->vectorSize);
+    this->hc = gsl_fft_halfcomplex_wavetable_alloc(this->vectorSize);
+    this->work = gsl_fft_real_workspace_alloc(this->vectorSize);
 
     conceptMemory["I"] = identity();
 }
@@ -354,33 +398,33 @@ void HRREngine::setVectorSize(int size){
  */
 HRR HRREngine::query(string name){
 
-	// Reorder the string
-	name = reorderNameLex(name);
+    // Reorder the string
+    name = reorderNameLex(name);
 
-	vector<string> strings = explode(name, '*');
+    vector<string> strings = explode(name, '*');
 
-	// See if a value exists for this concept in the map
-	//	For each concept in concept memory, check if the key matches the name of the concept we are looking for
-	for (pair<string, HRR> concept : conceptMemory){
+    // See if a value exists for this concept in the map
+    //	For each concept in concept memory, check if the key matches the name of the concept we are looking for
+    for (pair<string, HRR> concept : conceptMemory){
 
-		// If the name for the current concept is the name we are looking for, then we have found the concept
-		if ( concept.first == name ){
+            // If the name for the current concept is the name we are looking for, then we have found the concept
+            if ( concept.first == name ){
 
-			// Return the hrr for this concept
-			return concept.second;
-		}
-	}
+                    // Return the hrr for this concept
+                    return concept.second;
+            }
+    }
 
-	/**
-	 * If we did not return the value, we did not find the concept, thus we need to generate a new HRR for it and add it to the map
-	 *	Use construct function to build the concept and all of its constituent pieces
-	 */
+    /**
+     * If we did not return the value, we did not find the concept, thus we need to generate a new HRR for it and add it to the map
+     *	Use construct function to build the concept and all of its constituent pieces
+     */
 
-	HRR newHRR = constructConcept(strings);
+    HRR newHRR = constructConcept(strings);
 
-	conceptMemory.insert(pair<string, HRR>(name, newHRR));
+    conceptMemory.insert(pair<string, HRR>(name, newHRR));
 
-	return newHRR;
+    return newHRR;
 }
 
 string HRREngine::query(HRR hrr){

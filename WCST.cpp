@@ -77,6 +77,7 @@ void WCST::TrialStep::print()
 // Make a trial based on the current task
 WCST::TrialStep WCST::getTrialStep(int step)
 {
+    string connector = use_conjunctive ? "*" : "+";
     string state = "";
     vector<string> actions;
 
@@ -85,13 +86,13 @@ WCST::TrialStep WCST::getTrialStep(int step)
     {
         string rep = "";
         if( encode_dimensions )
-            rep += dimensions[d] + "+";
+            rep += dimensions[d] + connector;
 
         // If this task is feature specific, then we have to include that feature 
         if( !dimension_task && d == task_d[step] )
-            rep += features[d][task_f[step]] + "+";
+            rep += features[d][task_f[step]] + connector;
         else
-            rep += features[d][feature_picker(re)] + "+";
+            rep += features[d][feature_picker(re)] + connector;
 
         state += rep;
         actions.push_back(rep.substr(0,rep.length()-1));
@@ -158,9 +159,10 @@ bool WCST::answer(string response,int step)
     // Determine correctness of this step - this is always based on feature since we can't assume
     // that dimensions were encoded
     bool correct = false;
+    char connector = use_conjunctive ? '*' : '+';
     if( dimension_task )
     {
-        string token = response.substr(response.find('+') + 1);
+        string token = response.substr(response.find(connector) + 1);
         correct = (find(features[task_d[step]].begin(), features[task_d[step]].end(), token) != 
           features[task_d[step]].end());
     }
