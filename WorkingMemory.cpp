@@ -709,31 +709,9 @@ void WorkingMemory::findMostValuableChunks(vector<string> &candidateChunks) {
   return;
 }
 
-void WorkingMemory::findCombinationsOfCandidates(int offset, int slots, vector<string> &candidates, vector<string> &combination) {
-
-    if (slots == 0) {
-        double valueOfContents = findValueOfContents(combination);
-
-        if ( valueOfContents >= currentChunkValue ) {
-            workingMemoryChunks = combination;
-            currentChunkValue = valueOfContents;
-        }
-
-        return;
-    }
-
-    // Temporary rewrite of below
-    for (int i = 0; i < offset+1; i++) {
-      combination.push_back(candidates[i]);
-      findCombinationsOfCandidates(offset+i, slots-1, candidates, combination);
-      combination.pop_back();
-    }
-}
-
 // Find the HRR representing the state
 HRR WorkingMemory::stateRepresentation() {
-    return hrrengine.addHRRs(hrrengine.explode(state,'+'));
-    //return hrrengine.parse(state);
+    return hrrengine.query(state);
 }
 
 // Get the representation of the current working memory contents with the current state
@@ -745,7 +723,7 @@ HRR WorkingMemory::stateAndWorkingMemoryRepresentation() {
         representation = hrrengine.convolveHRRs(representation, hrrengine.query(workingMemoryChunks[i]));
     }
 
-    // Permute the representation of
+    // Permute the representation
     if (hrrengine.dot(hrrengine.query("I"),representation) != 1.0)
       representation = permute(representation,permutation);
 
@@ -775,9 +753,9 @@ double WorkingMemory::findValueOfContents(vector<string> &contents,HRR *stateRep
 
     // Each working memory chunk can have a disjunctive representation, so we add the contents of each slot
     // Get the convolved product of each chunk in working memory
-    HRR representation = hrrengine.addHRRs(hrrengine.explode(contents[0],'+'));
+    HRR representation = hrrengine.query(contents[0]);
     for ( int i = 1; i < contents.size(); i++ ) {
-        representation = hrrengine.convolveHRRs(representation, hrrengine.addHRRs(hrrengine.explode(contents[i],'+')));
+        representation = hrrengine.convolveHRRs(representation, hrrengine.query(contents[i]));
     }
 
     // Permute the internal representation of working memory contents
@@ -796,20 +774,20 @@ double WorkingMemory::findValueOfContents(vector<string> &contents,HRR *stateRep
 pair<string,HRR> WorkingMemory::findMostValuableAction(vector<string> possibleActions) {
     string action;
     HRR actionHRR;
-    double bestValue = -999;
+    double bestValue;
     HRR stateWMRepresentation = stateAndWorkingMemoryRepresentation();
 
     for ( int i = 0; i < possibleActions.size(); i++ ) {
 
         // Add together any disjunctive representations
         // Permute the action representation
-        HRR actionRepresentation = hrrengine.addHRRs(hrrengine.explode(possibleActions[i],'+'));
+        HRR actionRepresentation = hrrengine.query(possibleActions[i]);
         actionRepresentation = permute(actionRepresentation,actionPermutation);
         actionRepresentation = hrrengine.convolveHRRs(actionRepresentation,stateWMRepresentation);
 
         double val = critic.V(actionRepresentation, actionWeights, bias);
 
-        if( val > bestValue )
+        if( i == 0 || val > bestValue )
         {
             action = possibleActions[i];
             actionHRR = actionRepresentation;
@@ -826,9 +804,9 @@ double WorkingMemory::findValueOfStateContents(vector<string> &state, vector<str
 
     // Each working memory chunk can have a disjunctive representation, so we add the contents of each slot
     // Get the convolved product of each chunk in working memory
-    HRR representation = hrrengine.addHRRs(hrrengine.explode(contents[0],'+'));
+    HRR representation = hrrengine.query(contents[0]);
     for ( int i = 1; i < contents.size(); i++ ) {
-        representation = hrrengine.convolveHRRs(representation, hrrengine.addHRRs(hrrengine.explode(contents[i],'+')));
+        representation = hrrengine.convolveHRRs(representation, hrrengine.query(contents[i]));
     }
 
     // Permute the internal representation of working memory contents
@@ -851,9 +829,9 @@ double WorkingMemory::findValueOfStateContentsAction(vector<string> &state, vect
 
     // Each working memory chunk can have a disjunctive representation, so we add the contents of each slot
     // Get the convolved product of each chunk in working memory
-    HRR representation = hrrengine.addHRRs(hrrengine.explode(contents[0],'+'));
+    HRR representation = hrrengine.query(contents[0]);
     for ( int i = 1; i < contents.size(); i++ ) {
-        representation = hrrengine.convolveHRRs(representation, hrrengine.addHRRs(hrrengine.explode(contents[i],'+')));
+        representation = hrrengine.convolveHRRs(representation, hrrengine.query(contents[i]));
     }
 
     // Permute the internal representation of working memory contents
@@ -869,7 +847,7 @@ double WorkingMemory::findValueOfStateContentsAction(vector<string> &state, vect
     // Add together any disjunctive representations
     // Permute the action representation
     // Convolve the state/WM with the action
-    HRR actionRepresentation = hrrengine.addHRRs(hrrengine.explode(action,'+'));
+    HRR actionRepresentation = hrrengine.query(action);
     actionRepresentation = permute(actionRepresentation,actionPermutation);
     representation = hrrengine.convolveHRRs(actionRepresentation,representation);
 

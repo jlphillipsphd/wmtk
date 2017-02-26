@@ -158,9 +158,6 @@ class WorkingMemory {
     // valuable set of working memory contents
     void findMostValuableChunks(vector<string> &candidateChunks);
 
-    // Find all combinations of candidate chunks recursively
-    void findCombinationsOfCandidates(int offset, int slots, vector<string> &candidates, vector<string> &combination);
-
     // Find the HRR representing the state
     HRR stateRepresentation();
 
