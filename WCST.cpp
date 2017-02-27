@@ -81,23 +81,39 @@ WCST::TrialStep WCST::getTrialStep(int step)
     string state = "";
     vector<string> actions;
 
+    // This string is used to make an HRR that differentiates between
+    // trial steps; to turn it off set it to empty string
+    //string step_hrr_str = "";
+    string step_hrr_str = "_ts_" + to_string(step) + "*";
+
     // A trial must have only one stimuli set that matches the task
     for( int d = 0; d < dimensions_per_trial; d++ )
     {
         string rep = "";
         if( encode_dimensions )
+        {
+            if( !use_conjunctive )
+                rep += step_hrr_str;
             rep += dimensions[d] + connector;
+        }
 
         // If this task is feature specific, then we have to include that feature 
+        if( !use_conjunctive )
+            rep += step_hrr_str;
         if( !dimension_task && d == task_d[step] )
             rep += features[d][task_f[step]] + connector;
         else
             rep += features[d][feature_picker(re)] + connector;
 
         state += rep;
-        actions.push_back(rep.substr(0,rep.length()-1));
+        if( use_conjunctive )
+            rep = step_hrr_str + rep;
+        actions.push_back( rep.substr(0,rep.length()-1) );
     }
     
+    if( use_conjunctive )
+        state = step_hrr_str + state;
+
     return TrialStep(state.substr(0,state.length()-1),actions);
 }
 
@@ -163,8 +179,14 @@ bool WCST::answer(string response,int step)
     if( dimension_task )
     {
         string token = response.substr(response.find(connector) + 1);
-        correct = (find(features[task_d[step]].begin(), features[task_d[step]].end(), token) != 
-          features[task_d[step]].end());
+        for( string f : features[task_d[step]] )
+        {
+            if( response.find(f) != string::npos )
+            {
+                correct = true;
+                break;
+            }
+        }
     }
     else
         correct = (response.find(features[task_d[step]][task_f[step]]) != string::npos);

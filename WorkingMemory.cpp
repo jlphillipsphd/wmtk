@@ -589,7 +589,8 @@ void WorkingMemory::resetWeights(double lower, double upper) {
  *----------------------------------------------------------------------------*/
 
 // Unpack the state into a vector of possible candidates for working memory
-// NOTE: RIGHT NOW WE ASSUME NO CONVOLUTION (*) IN THE STATE
+// All permutations of the disjunct state will be presented.
+// E.g. "red*green+blue" will give { red*green, blue, red*green+blue }
 vector<string> WorkingMemory::getCandidateChunks(string state) {
 
     // Get the distinct list of stateConceptNames

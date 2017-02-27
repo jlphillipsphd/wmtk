@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     double learn_rate = .1;
     double gamma = .5;
     double lambda = .0;
-    double epsilon = .1;
+    double epsilon = .01;
     double bias = 1.0;
     int wm_chunks = 1;
     int max_concepts_per_chunk = 2;
@@ -51,10 +51,12 @@ int main(int argc, char *argv[])
     //int task_steps = 0;
     string a;
     WCST::TrialStep t;
-    while( wcst.total_tasks_completed < 100 )
+    while( wcst.total_tasks_completed < 10 )
     {
         // Each trial in the WCST is an episode for the WMTK
         wm.initializeEpisode();
+
+        vector<string> actions;
 
         // Each trial is further broken down into steps_per_trial steps
         for( int step = 0; step < steps_per_trial-1; step++ )
@@ -79,8 +81,8 @@ int main(int argc, char *argv[])
 /*
         if( wcst.total_trials_completed % 100 == 0 )
         {
-            cout << wcst.total_trials_completed << endl;
-            cout << wcst.total_tasks_completed << endl;
+            cout << "Trials: " << wcst.total_trials_completed << endl;
+            cout << "Tasks: " << wcst.total_tasks_completed << endl;
             wm.printWMContents();
         }
 */

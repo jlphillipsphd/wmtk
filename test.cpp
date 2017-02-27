@@ -18,11 +18,12 @@ int main(int argc, char *argv[])
     double epsilon = .01;
 
     WorkingMemory wm( learn_rate, gamma, lambda, epsilon, hrr_size, 1, 1, seed );
-/*
-    vector<string> candidateChunks = wm.getCandidateChunks("color+blue+shape+circle+color+red+shape+square");
+
+    vector<string> candidateChunks = wm.getCandidateChunks("color*blue+shape*circle");
     for(string chunk : candidateChunks)
-        cout << chunk << endl;k
-*/
+        cout << chunk << endl;
+
+/*
     HRR a = wm.hrrengine.query("a");
     HRR b = wm.hrrengine.query("b");
     wm.hrrengine.printHRRHorizontal(wm.hrrengine.query("a+b"));
@@ -33,4 +34,5 @@ int main(int argc, char *argv[])
     cout << endl;
     wm.hrrengine.printHRRHorizontal(wm.hrrengine.convolveHRRs(a,b));
     cout << endl;
+*/
 }
