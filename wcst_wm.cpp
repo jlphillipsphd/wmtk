@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     double learn_rate = .1;
     double gamma = .5;
     double lambda = .0;
-    double epsilon = .01;
+    double epsilon = .05;
     double bias = 1.0;
     int wm_chunks = 1;
     int max_concepts_per_chunk = 2;
@@ -47,17 +47,14 @@ int main(int argc, char *argv[])
 
     // Whenever trials_per_task number of tasks are completed successively
     // total_tasks_completed will increment, and a new task will begin
-    //int cur_task = 0;
-    //int task_steps = 0;
     string a;
     WCST::TrialStep t;
-    while( wcst.total_tasks_completed < 10 )
+    while( wcst.total_tasks_completed < 1 )
     {
         // Each trial in the WCST is an episode for the WMTK
         wm.initializeEpisode();
 
-        vector<string> actions;
-
+        /* NOTE: not using multi step problems anymore
         // Each trial is further broken down into steps_per_trial steps
         for( int step = 0; step < steps_per_trial-1; step++ )
         {
@@ -67,34 +64,18 @@ int main(int argc, char *argv[])
             a = wm.step( t.state + "+_ts_" + to_string(step), t.actions, 0.0 );
             wcst.answer( a, step );
         }
+        */
 
+        // NOTE: we are only using one step per trial
         // For the last step in the trial, absorb reward
         t = wcst.getTrialStep( steps_per_trial-1 );
-        //a = wm.step( t.state, t.actions, 0.0 );
+        a = wm.step( t.state, t.actions, 0.0 );
         //a = wm.step( t.state + "*_ts_" + to_string(steps_per_trial-1), t.actions, 0.0 );
-        a = wm.step( t.state + "+_ts_" + to_string(steps_per_trial-1), t.actions, 0.0 );
+        //a = wm.step( t.state + "+_ts_" + to_string(steps_per_trial-1), t.actions, 0.0 );
         if( wcst.answer( a, steps_per_trial-1 ) )
             wm.absorbReward(1.0);
         else
             wm.absorbReward(0.0);
-
-/*
-        if( wcst.total_trials_completed % 100 == 0 )
-        {
-            cout << "Trials: " << wcst.total_trials_completed << endl;
-            cout << "Tasks: " << wcst.total_tasks_completed << endl;
-            wm.printWMContents();
-        }
-*/
-/*
-        task_steps++;
-        if( wcst.total_tasks_completed != cur_task )
-        {
-            cout << task_steps << endl;
-            cur_task = wcst.total_tasks_completed;
-            task_steps = 0;
-        }
-*/
     }
 
     wcst.printStats();

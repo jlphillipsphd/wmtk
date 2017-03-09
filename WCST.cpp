@@ -83,8 +83,8 @@ WCST::TrialStep WCST::getTrialStep(int step)
 
     // This string is used to make an HRR that differentiates between
     // trial steps; to turn it off set it to empty string
-    //string step_hrr_str = "";
-    string step_hrr_str = "_ts_" + to_string(step) + "*";
+    string step_hrr_str = "";
+    //string step_hrr_str = "_ts_" + to_string(step) + "*";
 
     // A trial must have only one stimuli set that matches the task
     for( int d = 0; d < dimensions_per_trial; d++ )
