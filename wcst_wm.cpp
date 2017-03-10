@@ -49,7 +49,8 @@ int main(int argc, char *argv[])
     // total_tasks_completed will increment, and a new task will begin
     string a;
     WCST::TrialStep t;
-    while( wcst.total_tasks_completed < 1 )
+    float num_tasks = 1;
+    while( wcst.total_tasks_completed < num_tasks )
     {
         // Each trial in the WCST is an episode for the WMTK
         wm.initializeEpisode();
@@ -78,5 +79,6 @@ int main(int argc, char *argv[])
             wm.absorbReward(0.0);
     }
 
-    wcst.printStats();
+    //wcst.printStats();
+    //cout << wcst.total_trials_completed << endl;
 }

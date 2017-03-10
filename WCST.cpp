@@ -137,6 +137,10 @@ void WCST::printStats()
 // Change the current task
 void WCST::setTasks()
 {
+    // This was used to test against novel concepts
+    if( suppress_task_switching )
+        return;
+
     // We only need to change this if we're doing all tasks
     if( task_mode == 'A' )
         dimension_task = !dimension_task;
@@ -198,6 +202,7 @@ bool WCST::answer(string response,int step)
     // Update trial tallies
     if( step + 1 == steps_per_trial )
     {
+        current_task_trials++;
         total_trials_completed++;
         if( current_trial_correct )
         {
@@ -211,7 +216,11 @@ bool WCST::answer(string response,int step)
     // Switch tasks if needed
     if( successive_correct_trials == trials_per_task )
     {
+        // Test output
+        //cout << current_task_trials << endl;
+
         total_tasks_completed++;
+        current_task_trials = 0;
         successive_correct_trials = 0;
         setTasks();
     }

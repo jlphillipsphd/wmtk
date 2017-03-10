@@ -6,6 +6,9 @@ wcst: WCST.cpp wcst_manual.cpp
 wcst_wm: CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp WCST.cpp wcst_wm.cpp
 	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp WCST.cpp wcst_wm.cpp -lgsl -lblas -o wcst_wm
 
+wcst_wm_testC: CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp WCST.cpp wcst_wm_testC.cpp
+	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp WCST.cpp wcst_wm_testC.cpp -lgsl -lblas -o wcst_wm_testC
+
 1d_q: CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_q_hrr_1d_wm.cpp
 	g++ -g -std=c++11 CriticNetwork.cpp WorkingMemory.cpp hrr/hrrengine.cpp hrr/hrrOperators.cpp td_q_hrr_1d_wm.cpp -lgsl -lblas -o 1d_q
 

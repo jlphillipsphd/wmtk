@@ -42,6 +42,7 @@ public:
     std::vector<std::vector<std::string> > features;
     bool encode_dimensions = false;
     bool use_conjunctive = false;  // currently not exposed
+    bool suppress_task_switching = false;  // currently not exposed
 
     int dimensions_per_trial; // This will limit to the first n dimensions
     int features_per_trial; // This will limit to the first n features
@@ -49,6 +50,7 @@ public:
     long total_trials_completed = 0;
     long total_correct_trials = 0;
     long successive_correct_trials = 0;
+    long current_task_trials = 0;
     bool current_trial_correct = false;
 
     // Provide a file path to the stimuli file
