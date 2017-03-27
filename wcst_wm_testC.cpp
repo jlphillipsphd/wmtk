@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     stim_file2.close();
 
     // Set epsilon to zero
-    wmtk.epsilon = 0.0;
+    wm.critic.epsilon = 0.0;
 
     // Do one novel trial
     wm.initializeEpisode();
